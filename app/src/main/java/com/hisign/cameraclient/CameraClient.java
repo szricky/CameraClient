@@ -28,18 +28,32 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.hardware.usb.UsbDevice;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicYuvToRGB;
+import android.renderscript.Type;
 import android.util.Log;
 import android.view.Surface;
 
 import com.hisign.cameraserver.CameraCallback;
 import com.hisign.cameraserver.CameraInterface;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 
@@ -55,11 +69,14 @@ public class CameraClient implements ICameraClient {
 	protected CameraInterface mService;
 	protected ICameraClientCallback mListener;
 
+	private Context mContext;
+
 	public CameraClient(final Context context, final ICameraClientCallback listener) {
 		if (DEBUG) Log.v(TAG, "Constructor:");
+		mContext = context;
 		mWeakContext = new WeakReference<Context>(context);
 		mListener = listener;
-		mWeakHandler = new WeakReference<CameraHandler>(CameraHandler.createHandler(this));
+		mWeakHandler = new WeakReference<CameraHandler>(CameraHandler.createHandler(this,context));
 		doBindService();
 	}
 
@@ -209,9 +226,10 @@ public class CameraClient implements ICameraClient {
 
 
 	private static final class CameraHandler extends Handler {
-
-		public static CameraHandler createHandler(final CameraClient parent) {
+		private static Context mContext;
+		public static CameraHandler createHandler(final CameraClient parent,Context context) {
 			final CameraTask runnable = new CameraTask(parent);
+			mContext = context;
 			new Thread(runnable).start();
 			return runnable.getHandler();
 		}
@@ -277,30 +295,29 @@ public class CameraClient implements ICameraClient {
 			private CameraTask(final CameraClient parent) {
 				mParent = parent;
 			}
-
-
-
-
+			
 			public Bitmap rawByteArray2RGBABitmap2(byte[] data, int width, int height) {
 				int frameSize = width * height;
 				int[] rgba = new int[frameSize];
 
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++) {
-						int y = (0xff & ((int) data[i * width + j]));
-						int u = (0xff & ((int) data[frameSize + (i >> 1) * width + (j & ~1) + 0]));
-						int v = (0xff & ((int) data[frameSize + (i >> 1) * width + (j & ~1) + 1]));
+				for (int h = 0; h < height; h++)
+					for (int w = 0; w < width; w++) {
+
+
+						int y = (0xff & ((int) data[h * width + w]));
+						int u = (0xff & ((int) data[frameSize + (h >> 1) * width + (w & ~1) + 0]));
+						int v = (0xff & ((int) data[frameSize + (h >> 1) * width + (w & ~1) + 1]));
 						y = y < 16 ? 16 : y;
 
-						int r = Math.round(1.164f * (y - 16) + 1.596f * (v - 128));
-						int g = Math.round(1.164f * (y - 16) - 0.813f * (v - 128) - 0.391f * (u - 128));
-						int b = Math.round(1.164f * (y - 16) + 2.018f * (u - 128));
+						int b = Math.round(1.164f * (y-16) + 2.018f * (u - 128));
+						int g = Math.round(1.164f * (y-16) - 0.813f * (v - 128) - 0.391f * (u - 128));
+						int r =  Math.round(1.164f * (y-16) + 1.596f*(v - 128));
 
 						r = r < 0 ? 0 : (r > 255 ? 255 : r);
 						g = g < 0 ? 0 : (g > 255 ? 255 : g);
 						b = b < 0 ? 0 : (b > 255 ? 255 : b);
 
-						rgba[i * width + j] = 0xff000000 + (b << 16) + (g << 8) + r;
+						rgba[h * width + w] = 0xff000000 + (r << 16) + (g << 8) + b;
 					}
 
 				Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);//ARGB_8888);
@@ -342,11 +359,9 @@ public class CameraClient implements ICameraClient {
 			@Override
 			public void onFrame(byte[] data, int camera) throws RemoteException {
 				Log.d(TAG,"onFrame ,Data length is : " + data.length );
-				//Bitmap bitmap= BitmapFactory.decodeStream();
 
-				//byte[] bytes = out.toByteArray();
 				final Bitmap bitmap = rawByteArray2RGBABitmap2(data ,640,480);
-			//	Bitmap bitmap = MyBitmapFactory.createMyBitmap(data, 400, 200);
+
 				if (camera == 0){
 					Message obtainMessage = mHander.obtainMessage();
 					obtainMessage.obj= bitmap;
@@ -361,7 +376,6 @@ public class CameraClient implements ICameraClient {
 					obtainMessage.what= MSG_IMAGE_VIEW_R;
 					mHander.sendMessage(obtainMessage);
 				}
-
 			}
 
 
@@ -521,5 +535,67 @@ public class CameraClient implements ICameraClient {
 			}
 		}
 	}
+
+
+
+	public static Bitmap Bytes2Bitmap(byte[] data) {
+		//处理data
+		BitmapFactory.Options newOpts = new BitmapFactory.Options();
+		newOpts.inJustDecodeBounds = true;
+		YuvImage yuvimage = new YuvImage(
+				data,
+				ImageFormat.NV21,
+				640,
+				480,
+				null);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		// 80--JPG图片的质量[0-100],100最高
+		yuvimage.compressToJpeg(new Rect(0, 0, 640,480 ), 80, baos);
+		byte[] rawImage = baos.toByteArray();
+		//将rawImage转换成bitmap
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inPreferredConfig = Bitmap.Config.RGB_565;
+		try {
+			baos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		yuvimage = null;
+		return BitmapFactory.decodeByteArray(rawImage, 0, rawImage.length, options);
+	}
+
+
+	public static Bitmap YuvToBmp(Context context, byte[] data, int width, int height) {
+		RenderScript rs;
+		ScriptIntrinsicYuvToRGB yuvToRgbIntrinsic;
+		byte[] outBytes = new byte[width * height * 4];
+
+		rs = RenderScript.create(context);
+		yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.RGBA_8888(rs));
+
+		Type.Builder yuvType = new Type.Builder(rs, Element.U8(rs))
+				.setX(width).setY(height)
+				.setYuvFormat(android.graphics.ImageFormat.NV21);
+
+		Allocation in = Allocation.createTyped(rs, yuvType.create(), Allocation.USAGE_SCRIPT);
+
+		Type.Builder rgbaType = new Type.Builder(rs, Element.RGBA_8888(rs)).setX(width).setY(height);
+
+		Allocation out = Allocation.createTyped(rs, rgbaType.create(), Allocation.USAGE_SCRIPT);
+
+		in.copyFrom(data);
+
+		yuvToRgbIntrinsic.setInput(in);
+		yuvToRgbIntrinsic.forEach(out);
+
+		out.copyTo(outBytes);
+
+		Bitmap bmpout = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+		out.copyTo(bmpout);
+
+		return bmpout;
+	}
+
+
 
 }

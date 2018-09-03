@@ -12,6 +12,8 @@ import android.view.Window;
 
 import com.hisign.cameraserver.CameraInterface;
 
+import static com.hisign.cameraclient.PermisionUtils.verifyStoragePermissions;
+
 public class MainActivity extends AppCompatActivity {
     private static final boolean DEBUG = false;
     private static final String TAG = "MainActivity";
@@ -35,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
+        verifyStoragePermissions(this);
 
         if (savedInstanceState == null) {
             if (DEBUG) Log.i(TAG, "onCreate:new");
