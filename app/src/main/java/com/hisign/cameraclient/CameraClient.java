@@ -283,6 +283,9 @@ public class CameraClient implements ICameraClient {
 			}
 		}
 
+		private static Bitmap bmp_l = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
+		private static Bitmap bmp_r = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
+
 		private static final class CameraTask extends CameraCallback.Stub implements Runnable,Handler.Callback {
 			private static final String TAG_CAMERA = "CameraClientThread";
 			private final Object mSync = new Object();
@@ -295,15 +298,12 @@ public class CameraClient implements ICameraClient {
 			private CameraTask(final CameraClient parent) {
 				mParent = parent;
 			}
-			
-			public Bitmap rawByteArray2RGBABitmap2(byte[] data, int width, int height) {
+
+			public void rawByteArray2RGBABitmap2(Bitmap bitmap,byte[] data, int width, int height) {
 				int frameSize = width * height;
 				int[] rgba = new int[frameSize];
-
 				for (int h = 0; h < height; h++)
 					for (int w = 0; w < width; w++) {
-
-
 						int y = (0xff & ((int) data[h * width + w]));
 						int u = (0xff & ((int) data[frameSize + (h >> 1) * width + (w & ~1) + 0]));
 						int v = (0xff & ((int) data[frameSize + (h >> 1) * width + (w & ~1) + 1]));
@@ -320,9 +320,8 @@ public class CameraClient implements ICameraClient {
 						rgba[h * width + w] = 0xff000000 + (r << 16) + (g << 8) + b;
 					}
 
-				Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);//ARGB_8888);
-				bmp.setPixels(rgba, 0 , width, 0, 0, width, height);
-				return bmp;
+				bitmap.setPixels(rgba, 0 , width, 0, 0, width, height);
+				//return bmp;
 			}
 
 			public CameraHandler getHandler() {
@@ -359,23 +358,21 @@ public class CameraClient implements ICameraClient {
 			@Override
 			public void onFrame(byte[] data, int camera) throws RemoteException {
 				Log.d(TAG,"onFrame ,Data length is : " + data.length );
-
-				final Bitmap bitmap = rawByteArray2RGBABitmap2(data ,640,480);
-
 				if (camera == 0){
 					Message obtainMessage = mHander.obtainMessage();
-					obtainMessage.obj= bitmap;
+					obtainMessage.obj= data;
 					obtainMessage.arg1=camera;
 					obtainMessage.what= MSG_IMAGE_VIEW;
 					mHander.sendMessage(obtainMessage);
 
 				}else {
 					Message obtainMessage = mHander.obtainMessage();
-					obtainMessage.obj= bitmap;
+					obtainMessage.obj= data;
 					obtainMessage.arg1=camera;
 					obtainMessage.what= MSG_IMAGE_VIEW_R;
 					mHander.sendMessage(obtainMessage);
 				}
+
 			}
 
 
@@ -511,17 +508,15 @@ public class CameraClient implements ICameraClient {
 				switch (msg.what) {
 					case MSG_IMAGE_VIEW:
 						Log.d(TAG,"CAMERA_DATA");
-						Bitmap bitmap=(Bitmap)msg.obj;
-						int camera=msg.arg1;
-						handleImage(bitmap);
-						//Log.d(TAG,"bitmap is : " + bitmap.getByteCount() + " , camera is " + camera);
-						//preView_right.setImageBitmap(bitmap);
+						byte[] data = (byte[]) msg.obj;
+						rawByteArray2RGBABitmap2(bmp_l,data ,640,480);
+						handleImage(bmp_l);
 						break;
 					case MSG_IMAGE_VIEW_R:
 						Log.d(TAG,"CAMERA_DATA_R");
-						Bitmap bitmap1=(Bitmap)msg.obj;
-						int camera1=msg.arg1;
-						handleImageR(bitmap1);
+						byte[] data1 = (byte[]) msg.obj;
+						rawByteArray2RGBABitmap2(bmp_r,data1 ,640,480);
+						handleImageR(bmp_r);
 
 						break;
 					/*case MSG_SET_THREAD_CALL_BACK:
@@ -538,63 +533,7 @@ public class CameraClient implements ICameraClient {
 
 
 
-	public static Bitmap Bytes2Bitmap(byte[] data) {
-		//处理data
-		BitmapFactory.Options newOpts = new BitmapFactory.Options();
-		newOpts.inJustDecodeBounds = true;
-		YuvImage yuvimage = new YuvImage(
-				data,
-				ImageFormat.NV21,
-				640,
-				480,
-				null);
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		// 80--JPG图片的质量[0-100],100最高
-		yuvimage.compressToJpeg(new Rect(0, 0, 640,480 ), 80, baos);
-		byte[] rawImage = baos.toByteArray();
-		//将rawImage转换成bitmap
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inPreferredConfig = Bitmap.Config.RGB_565;
-		try {
-			baos.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		yuvimage = null;
-		return BitmapFactory.decodeByteArray(rawImage, 0, rawImage.length, options);
-	}
 
-
-	public static Bitmap YuvToBmp(Context context, byte[] data, int width, int height) {
-		RenderScript rs;
-		ScriptIntrinsicYuvToRGB yuvToRgbIntrinsic;
-		byte[] outBytes = new byte[width * height * 4];
-
-		rs = RenderScript.create(context);
-		yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.RGBA_8888(rs));
-
-		Type.Builder yuvType = new Type.Builder(rs, Element.U8(rs))
-				.setX(width).setY(height)
-				.setYuvFormat(android.graphics.ImageFormat.NV21);
-
-		Allocation in = Allocation.createTyped(rs, yuvType.create(), Allocation.USAGE_SCRIPT);
-
-		Type.Builder rgbaType = new Type.Builder(rs, Element.RGBA_8888(rs)).setX(width).setY(height);
-
-		Allocation out = Allocation.createTyped(rs, rgbaType.create(), Allocation.USAGE_SCRIPT);
-
-		in.copyFrom(data);
-
-		yuvToRgbIntrinsic.setInput(in);
-		yuvToRgbIntrinsic.forEach(out);
-
-		out.copyTo(outBytes);
-
-		Bitmap bmpout = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-		out.copyTo(bmpout);
-
-		return bmpout;
-	}
 
 
 
