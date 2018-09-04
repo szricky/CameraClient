@@ -406,7 +406,10 @@ public class CameraClient implements ICameraClient {
 						Log.d(TAG,"mIsConnected is : " + mIsConnected);
 					if (!mIsConnected/*!service.isConnected(mServiceId)*/) {
 						//service.connect(mServiceId);
+						Log.d(TAG,"service.openCamera");
+					//	service.openCamera("0","1");
 						service.openCamera();
+						//service.openCamera("1","0");
 						mIsConnected = true;
 						if (mParent != null) {
 							if (mParent.mListener != null) {

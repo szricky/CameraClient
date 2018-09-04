@@ -253,7 +253,8 @@ public class CameraFragment extends BaseFragment {
 		}
 	}
 
-
+	// c45:6340
+	// 46d:825
 	private void openUVCCamera(final int index) {
 		if (DEBUG) Log.v(TAG, "openUVCCamera:index=" + index);
 		if (!mUSBMonitor.isRegistered()) return;
