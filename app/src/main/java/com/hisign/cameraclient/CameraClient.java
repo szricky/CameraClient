@@ -114,7 +114,6 @@ public class CameraClient implements ICameraClient {
 	@Override
 	public void connect(int pid_0,int pid_1 ) {
 		if (DEBUG) Log.v(TAG, "connect:");
-		//mWeakHandler.get().sendEmptyMessage(MSG_CONNECT);
 		final CameraHandler handler = mWeakHandler.get();
 		handler.sendMessage(handler.obtainMessage(MSG_CONNECT,pid_0,pid_1));
 	}
@@ -126,13 +125,6 @@ public class CameraClient implements ICameraClient {
 	}
 
 
-
-
-	/*@Override
-	public void test() {
-
-	}*/
-
 	protected boolean doBindService() {
 		if (DEBUG) Log.v(TAG, "doBindService:");
 		synchronized (mServiceSync) {
@@ -140,11 +132,8 @@ public class CameraClient implements ICameraClient {
 				final Context context = mWeakContext.get();
 				if (context != null) {
 					final Intent intent = new Intent(CameraInterface.class.getName());
-					//intent.setPackage("com.serenegiant.usbcameratest4");
 					intent.setPackage("com.hisign.cameraserver");
-
-					context.bindService(intent,
-						mServiceConnection, Context.BIND_AUTO_CREATE);
+					context.bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
 				} else
 					return true;
 			}
@@ -249,7 +238,6 @@ public class CameraClient implements ICameraClient {
 				mCameraTask.handleSelect((UsbDevice)msg.obj);
 				break;
 			case MSG_CONNECT:
-				//mCameraTask.handleConnect();
 				int pid_0 = (int) msg.arg1;
 				int pid_1 = (int) msg.arg2;
 				mCameraTask.handleConnect(pid_0,pid_1);
@@ -264,13 +252,10 @@ public class CameraClient implements ICameraClient {
 				mCameraTask.handleRemoveSurface((Surface)msg.obj);
 				break;
 			case MSG_START_RECORDING:
-			//	mCameraTask.handleStartRecording();
 				break;
 			case MSG_STOP_RECORDING:
-			//	mCameraTask.handleStopRecording();
 				break;
 			case MSG_CAPTURE_STILL:
-			//	mCameraTask.handleCaptureStill((String)msg.obj);
 				break;
 			case MSG_RESIZE:
 				mCameraTask.handleResize(msg.arg1, msg.arg2);
@@ -280,9 +265,6 @@ public class CameraClient implements ICameraClient {
 				mCameraTask = null;
 				Looper.myLooper().quit();
 				break;
-			/*case MSG_IMAGE_VIEW:
-				mCameraTask.handleImage((byte[])msg.obj);
-				break;*/
 				default:
 				throw new RuntimeException("unknown message:what=" + msg.what);
 			}
@@ -297,7 +279,6 @@ public class CameraClient implements ICameraClient {
 			private CameraClient mParent;
 			private CameraHandler mHandler;
 			private boolean mIsConnected;
-			private int mServiceId;
 			private Handler mHander = new Handler(this);
 
 			private CameraTask(final CameraClient parent) {
@@ -387,7 +368,6 @@ public class CameraClient implements ICameraClient {
 				final CameraInterface service = mParent.getService();
 				if (service != null) {
 					try {
-					//	mServiceId = service.select(device, this);
 						service.registerCallback(this);
 					} catch (final RemoteException e) {
 						if (DEBUG) Log.e(TAG_CAMERA, "select:", e);
@@ -410,11 +390,8 @@ public class CameraClient implements ICameraClient {
 				try {
 						Log.d(TAG,"mIsConnected is : " + mIsConnected);
 					if (!mIsConnected/*!service.isConnected(mServiceId)*/) {
-						//service.connect(mServiceId);
 						Log.d(TAG,"service.openCamera");
-					//	service.openCamera("0","1");
 						service.openCamera(pid_0,pid_1);
-						//service.openCamera("1","0");
 						mIsConnected = true;
 						if (mParent != null) {
 							if (mParent.mListener != null) {
@@ -422,7 +399,6 @@ public class CameraClient implements ICameraClient {
 							}
 						}
 					} else {
-						//mIsConnected = true;
 						if (mParent != null) {
 							if (mParent.mListener != null) {
 								mParent.mListener.onConnect();
@@ -442,14 +418,11 @@ public class CameraClient implements ICameraClient {
 					Log.d(TAG,"mIsConnected is : " + mIsConnected);
 
 					if (mIsConnected){//service.isConnected(mServiceId)) {
-						//service.disconnect(mServiceId);
 						service.stop();
 						mIsConnected = false;
 
 					} else {
-						//onDisConnected();
 						if (DEBUG) Log.v(TAG_CAMERA, "onDisConnected:");
-						//mIsConnected = false;
 						if (mParent != null) {
 							if (mParent.mListener != null) {
 								mParent.mListener.onDisconnect();
@@ -465,13 +438,6 @@ public class CameraClient implements ICameraClient {
 			public void handleAddSurface(final Surface surface, final boolean isRecordable) {
 				if (DEBUG) Log.v(TAG_CAMERA, "handleAddSurface:surface=" + surface + ",hash=" + surface.hashCode());
 				final CameraInterface service = mParent.getService();
-				/*if (service != null)
-				try {
-					service.addSurface(mServiceId);//, surface.hashCode(), surface, isRecordable);
-
-				} catch (final RemoteException e) {
-					if (DEBUG) Log.e(TAG_CAMERA, "handleAddSurface:", e);
-				}*/
 			}
 
 
@@ -479,12 +445,6 @@ public class CameraClient implements ICameraClient {
 			public void handleRemoveSurface(final Surface surface) {
 				if (DEBUG) Log.v(TAG_CAMERA, "handleRemoveSurface:surface=" + surface + ",hash=" + surface.hashCode());
 				final CameraInterface service = mParent.getService();
-				/*if (service != null)
-				try {
-					service.removeSurface(mServiceId, surface.hashCode());
-				} catch (final RemoteException e) {
-					if (DEBUG) Log.e(TAG_CAMERA, "handleRemoveSurface:", e);
-				}*/
 			}
 
 			public void handleResize(final int width, final int height) {
@@ -525,11 +485,7 @@ public class CameraClient implements ICameraClient {
 						byte[] data1 = (byte[]) msg.obj;
 						rawByteArray2RGBABitmap2(bmp_r,data1 ,640,480);
 						handleImageR(bmp_r);
-
 						break;
-					/*case MSG_SET_THREAD_CALL_BACK:
-
-						break;*/
 					default:
 						break;
 				}

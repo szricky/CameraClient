@@ -140,11 +140,6 @@ public class CameraFragment extends BaseFragment {
 	@Override
 	public void onPause() {
 		if (DEBUG) Log.v(TAG, "onPause:");
-		if (mCameraClient != null) {
-		/*	mCameraClient.removeSurface(mCameraView.getSurface());
-			mCameraClient.removeSurface(mCameraViewSub.getHolder().getSurface());
-			isSubView = false;*/
-		}
 		mUSBMonitor.unregister();
 		enableButtons(false);
 		super.onPause();
@@ -233,28 +228,7 @@ public class CameraFragment extends BaseFragment {
 		openUVCCamera(0);
 	}
 
-	private void openUVCCamera(int vid,int pid){
-		if (DEBUG) Log.v(TAG, "openUVCCamera pid" + pid + " vid is : " + vid);
-		if (!mUSBMonitor.isRegistered()) return;
-		final List<UsbDevice> list = mUSBMonitor.getDeviceList();
-		for (int i = 0;i<list.size();i++){
-			UsbDevice device = list.get(i);
-			String mString = String.format("UVC Camera:(%x:%x:%s)", device.getVendorId(), device.getProductId(), device.getDeviceName());
-			Log.d(TAG,""+ mString);
-			if (pid == device.getProductId() && vid == device.getVendorId()){
-				enableButtons(false);
-				if (mCameraClient == null)
-					mCameraClient = new CameraClient(getActivity(), mCameraListener);
-				mCameraClient.select(list.get(i));
-				mCameraClient.resize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-				mCameraClient.connect(0x1a90,0x1a20);
-			}
 
-		}
-	}
-
-	// c45:6340
-	// 46d:825
 	private void openUVCCamera(final int index) {
 		if (DEBUG) Log.v(TAG, "openUVCCamera:index=" + index);
 		if (!mUSBMonitor.isRegistered()) return;
@@ -271,7 +245,7 @@ public class CameraFragment extends BaseFragment {
 				mCameraClient = new CameraClient(getActivity(), mCameraListener);
 			mCameraClient.select(list.get(index));
 			mCameraClient.resize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-			mCameraClient.connect(0x1a90,0x1a20);
+			mCameraClient.connect(0x1a90,0x1a20);//实际摄像头pid  0x1a90可见   0x1a20红外
 		}
 	}
 

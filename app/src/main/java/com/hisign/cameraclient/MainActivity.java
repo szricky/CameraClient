@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Intent intent = new Intent();
-        //intent.setPackage("com.serenegiant.service");
         intent.setPackage("com.hisign.cameraserver");
         intent.setAction("com.hisign.cameraserver.CameraInterface");
         bindService(intent, connection, BIND_AUTO_CREATE);
