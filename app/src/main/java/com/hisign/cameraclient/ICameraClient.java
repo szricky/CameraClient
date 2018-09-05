@@ -30,7 +30,7 @@ public interface ICameraClient {
 	public void select(UsbDevice device);
 	public void release();
 	public void resize(int width, int height);
-	public void connect();
+	public void connect(int pid_0,int pid_1);
 	public void disconnect();
 
 

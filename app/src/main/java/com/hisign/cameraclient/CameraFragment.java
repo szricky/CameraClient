@@ -247,7 +247,7 @@ public class CameraFragment extends BaseFragment {
 					mCameraClient = new CameraClient(getActivity(), mCameraListener);
 				mCameraClient.select(list.get(i));
 				mCameraClient.resize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-				mCameraClient.connect();
+				mCameraClient.connect(0x1a90,0x1a20);
 			}
 
 		}
@@ -271,7 +271,7 @@ public class CameraFragment extends BaseFragment {
 				mCameraClient = new CameraClient(getActivity(), mCameraListener);
 			mCameraClient.select(list.get(index));
 			mCameraClient.resize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-			mCameraClient.connect();
+			mCameraClient.connect(0x1a90,0x1a20);
 		}
 	}
 
@@ -319,7 +319,7 @@ public class CameraFragment extends BaseFragment {
 						mCameraClient = new CameraClient(getActivity(), mCameraListener);
 					mCameraClient.select(list.get(0));
 					mCameraClient.resize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-					mCameraClient.connect();
+					mCameraClient.connect(0x1a90,0x1a20);
 					setPreviewButton(false);
 				}
 				break;

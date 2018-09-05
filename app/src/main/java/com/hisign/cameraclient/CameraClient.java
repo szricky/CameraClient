@@ -112,9 +112,11 @@ public class CameraClient implements ICameraClient {
 	}
 	
 	@Override
-	public void connect() {
+	public void connect(int pid_0,int pid_1 ) {
 		if (DEBUG) Log.v(TAG, "connect:");
-		mWeakHandler.get().sendEmptyMessage(MSG_CONNECT);
+		//mWeakHandler.get().sendEmptyMessage(MSG_CONNECT);
+		final CameraHandler handler = mWeakHandler.get();
+		handler.sendMessage(handler.obtainMessage(MSG_CONNECT,pid_0,pid_1));
 	}
 
 	@Override
@@ -247,7 +249,10 @@ public class CameraClient implements ICameraClient {
 				mCameraTask.handleSelect((UsbDevice)msg.obj);
 				break;
 			case MSG_CONNECT:
-				mCameraTask.handleConnect();
+				//mCameraTask.handleConnect();
+				int pid_0 = (int) msg.arg1;
+				int pid_1 = (int) msg.arg2;
+				mCameraTask.handleConnect(pid_0,pid_1);
 				break;
 			case MSG_DISCONNECT:
 				mCameraTask.handleDisconnect();
@@ -398,7 +403,7 @@ public class CameraClient implements ICameraClient {
 				mParent.doUnBindService();
 			}
 
-			public void handleConnect() {
+			public void handleConnect(int pid_0,int pid_1) {
 				if (DEBUG) Log.v(TAG_CAMERA, "handleConnect:");
 				final CameraInterface service = mParent.getService();
 				if (service != null)
@@ -408,7 +413,7 @@ public class CameraClient implements ICameraClient {
 						//service.connect(mServiceId);
 						Log.d(TAG,"service.openCamera");
 					//	service.openCamera("0","1");
-						service.openCamera();
+						service.openCamera(pid_0,pid_1);
 						//service.openCamera("1","0");
 						mIsConnected = true;
 						if (mParent != null) {

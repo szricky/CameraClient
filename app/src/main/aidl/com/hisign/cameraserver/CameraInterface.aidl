@@ -34,7 +34,7 @@ import android.view.Surface;
 	release>					release camera
 */
 interface CameraInterface {
-	int openCamera();
+	int openCamera(int pid_0,int pid_1);
 	int stop();
 	void registerCallback(CameraCallback cb);
     void unregisterCallback(CameraCallback cb);

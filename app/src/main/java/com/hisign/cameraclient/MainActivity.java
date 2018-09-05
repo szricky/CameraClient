@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
                     .add(R.id.container, fragment).commit();
         }
 
-
         Intent intent = new Intent();
         //intent.setPackage("com.serenegiant.service");
         intent.setPackage("com.hisign.cameraserver");
