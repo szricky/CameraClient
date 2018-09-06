@@ -281,6 +281,7 @@ public class CameraClient implements ICameraClient {
 			private boolean mIsConnected;
 			private Handler mHander = new Handler(this);
 
+
 			private CameraTask(final CameraClient parent) {
 				mParent = parent;
 			}
@@ -341,10 +342,12 @@ public class CameraClient implements ICameraClient {
 //================================================================================
 // callbacks from service
 
+
 			@Override
 			public void onFrame(byte[] data, int camera) throws RemoteException {
 				Log.d(TAG,"onFrame ,Data length is : " + data.length );
 				if (camera == 0){
+
 					Message obtainMessage = mHander.obtainMessage();
 					obtainMessage.obj= data;
 					obtainMessage.arg1=camera;

@@ -47,6 +47,7 @@ import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.USBMonitor.OnDeviceConnectListener;
 import com.serenegiant.usb.USBMonitor.UsbControlBlock;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class CameraFragment extends BaseFragment {
@@ -62,8 +63,8 @@ public class CameraFragment extends BaseFragment {
 	private USBMonitor mUSBMonitor;
 	private ICameraClient mCameraClient;
 
-	private ImageView mImageView;
-	private ImageView mImageViewR;
+	private static ImageView mImageView;
+	private static ImageView mImageViewR;
 
 	private ToggleButton mPreviewButton;
 
@@ -85,6 +86,34 @@ public class CameraFragment extends BaseFragment {
 	private static final int IMAGE_VIEW = 0;
 	private static final int IMAGE_VIEW_R = 1;
 
+	private static class MyHandler extends Handler{
+		//持有弱引用HandlerActivity,GC回收时会被回收掉.
+		private final WeakReference<CameraFragment> mCameraFragment;
+		public MyHandler(CameraFragment fragment){
+			mCameraFragment =new WeakReference<CameraFragment>(fragment);
+		}
+		@Override
+		public void handleMessage(Message msg) {
+			CameraFragment cameraFragment= mCameraFragment.get();
+			super.handleMessage(msg);
+			if(cameraFragment!=null){
+				//执行业务逻辑
+				switch (msg.what) {
+					case IMAGE_VIEW:
+						Log.d(TAG,"setImageBitmap");
+						Bitmap bitmap = (Bitmap) msg.obj;
+						mImageView.setImageBitmap(bitmap);
+						break;
+					case IMAGE_VIEW_R:
+						Log.d(TAG,"setImageBitmap");
+						Bitmap bitmap1 = (Bitmap) msg.obj;
+						mImageViewR.setImageBitmap(bitmap1);
+						break;
+				}
+			}
+		}
+	}
+
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -94,8 +123,10 @@ public class CameraFragment extends BaseFragment {
 			final List<DeviceFilter> filters = DeviceFilter.getDeviceFilters(getActivity(), R.xml.device_filter);
 			mUSBMonitor.setDeviceFilter(filters);
 		}
+		mHandler =new MyHandler(this);
 
-		mHandler = new Handler(){
+
+	/*	mHandler = new Handler(){
 			public void handleMessage(Message msg) {
 				switch (msg.what) {
 					case IMAGE_VIEW:
@@ -110,7 +141,7 @@ public class CameraFragment extends BaseFragment {
 						break;
 				}
 			}
-	};
+	};*/
 	}
 
 	@Override
