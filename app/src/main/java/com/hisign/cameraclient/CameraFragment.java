@@ -46,6 +46,7 @@ import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.USBMonitor.OnDeviceConnectListener;
 import com.serenegiant.usb.USBMonitor.UsbControlBlock;
+import com.serenegiant.widget.CameraViewInterface;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -63,8 +64,10 @@ public class CameraFragment extends BaseFragment {
 	private USBMonitor mUSBMonitor;
 	private ICameraClient mCameraClient;
 
-	private static ImageView mImageView;
-	private static ImageView mImageViewR;
+	/*private static ImageView mImageView;
+	private static ImageView mImageViewR;*/
+	private CameraViewInterface mCameraView;
+
 
 	private ToggleButton mPreviewButton;
 
@@ -102,12 +105,14 @@ public class CameraFragment extends BaseFragment {
 					case IMAGE_VIEW:
 						Log.d(TAG,"setImageBitmap");
 						Bitmap bitmap = (Bitmap) msg.obj;
-						mImageView.setImageBitmap(bitmap);
+					//	mImageView.setImageBitmap(bitmap);
 						break;
 					case IMAGE_VIEW_R:
 						Log.d(TAG,"setImageBitmap");
 						Bitmap bitmap1 = (Bitmap) msg.obj;
-						mImageViewR.setImageBitmap(bitmap1);
+
+						//mImageViewR.setImageBitmap(bitmap1);
+
 						break;
 				}
 			}
@@ -155,8 +160,10 @@ public class CameraFragment extends BaseFragment {
 		mPreviewButton = (ToggleButton)rootView.findViewById(R.id.preview_button);
 		setPreviewButton(false);
 		mPreviewButton.setEnabled(false);
-		mImageView = (ImageView) rootView.findViewById(R.id.frame_image_test);
-		mImageViewR = (ImageView) rootView.findViewById(R.id.frame_image_test_r);
+		/*mImageView = (ImageView) rootView.findViewById(R.id.frame_image_test);
+		mImageViewR = (ImageView) rootView.findViewById(R.id.frame_image_test_r);*/
+		mCameraView = (CameraViewInterface)rootView.findViewById(R.id.camera_view);
+		mCameraView.setAspectRatio(DEFAULT_WIDTH / (float)DEFAULT_HEIGHT);
 
 		return rootView;
 	}
@@ -206,7 +213,7 @@ public class CameraFragment extends BaseFragment {
 		@Override
 		public void onAttach(final UsbDevice device) {
 			if (DEBUG) Log.v(TAG, "OnDeviceConnectListener#onAttach:");
-			if (!updateCameraDialog()){// && (mCameraView.hasSurface())) {
+			if (!updateCameraDialog() && mCameraView.hasSurface()){// && (mCameraView.hasSurface())) {
 				tryOpenUVCCamera(true);
 			}
 		}
@@ -284,6 +291,8 @@ public class CameraFragment extends BaseFragment {
 		@Override
 		public void onConnect() {
 			if (DEBUG) Log.v(TAG, "onConnect:");
+			mCameraClient.addSurface(mCameraView.getSurface(), false);
+
 			enableButtons(true);
 			setPreviewButton(true);
 		}
@@ -345,9 +354,30 @@ public class CameraFragment extends BaseFragment {
 	private final OnCheckedChangeListener mOnCheckedChangeListener = new OnCheckedChangeListener() {
 		@Override
 		public void onCheckedChanged(final CompoundButton buttonView, final boolean isChecked) {
-			if (DEBUG) Log.v(TAG, "onCheckedChanged:" + isChecked);
+			if (isChecked) {
+				mCameraClient.addSurface(mCameraView.getSurface(), false);
+//				mCameraClient.addSurface(mCameraViewSub.getHolder().getSurface(), false);
+			} else {
+				//mCameraClient.removeSurface(mCameraView.getSurface());
+//				mCameraClient.removeSurface(mCameraViewSub.getHolder().getSurface());
+			}
 		}
 	};
+
+/*	private void setPreviewButton(final boolean onoff) {
+		getActivity().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				mPreviewButton.setOnCheckedChangeListener(null);
+				try {
+					mPreviewButton.setChecked(onoff);
+				} finally {
+					mPreviewButton.setOnCheckedChangeListener(mOnCheckedChangeListener);
+				}
+			}
+		});
+	}*/
+
 
 	private void setPreviewButton(final boolean onoff) {
 		getActivity().runOnUiThread(new Runnable() {
@@ -363,12 +393,25 @@ public class CameraFragment extends BaseFragment {
 		});
 	}
 
+/*	private final void enableButtons(final boolean enable) {
+		setPreviewButton(false);
+		getActivity().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				mPreviewButton.setEnabled(enable);
+
+			}
+		});
+	}*/
+
 	private final void enableButtons(final boolean enable) {
 		setPreviewButton(false);
 		getActivity().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				mPreviewButton.setEnabled(enable);
+			//	mRecordButton.setEnabled(enable);
+			//	mStillCaptureButton.setEnabled(enable);
 
 			}
 		});

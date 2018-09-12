@@ -21,18 +21,26 @@
  *  may have a different license, see the respective files.
  */
 
-package com.hisign.cameraclient;
+package com.serenegiant.widget;
 
-import android.hardware.usb.UsbDevice;
+import android.graphics.Bitmap;
+import android.graphics.SurfaceTexture;
 import android.view.Surface;
 
-public interface ICameraClient {
-	public void select(UsbDevice device);
-	public void release();
-	public void resize(int width, int height);
-	public void connect(int pid_0,int pid_1);
-	public void disconnect();
+import com.hisign.cameraclient.IVideoEncoder;
 
-	public void addSurface(Surface surface, boolean isRecordable);
-
+public interface CameraViewInterface extends IAspectRatioView {
+	public interface Callback {
+		public void onSurfaceCreated(CameraViewInterface view, Surface surface);
+		public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height);
+		public void onSurfaceDestroy(CameraViewInterface view, Surface surface);
+	}
+	public void onPause();
+	public void onResume();
+	public void setCallback(Callback callback);
+	public SurfaceTexture getSurfaceTexture();
+	public Surface getSurface();
+	public boolean hasSurface();
+	public void setVideoEncoder(final IVideoEncoder encoder);
+	public Bitmap captureStillImage();
 }

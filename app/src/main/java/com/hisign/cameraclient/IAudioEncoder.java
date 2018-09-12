@@ -23,16 +23,5 @@
 
 package com.hisign.cameraclient;
 
-import android.hardware.usb.UsbDevice;
-import android.view.Surface;
-
-public interface ICameraClient {
-	public void select(UsbDevice device);
-	public void release();
-	public void resize(int width, int height);
-	public void connect(int pid_0,int pid_1);
-	public void disconnect();
-
-	public void addSurface(Surface surface, boolean isRecordable);
-
+public interface IAudioEncoder {
 }

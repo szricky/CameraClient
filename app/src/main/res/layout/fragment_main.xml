@@ -60,7 +60,7 @@
 
 
 
-    <ImageView
+<!--   <ImageView
         android:id="@+id/frame_image_test"
         android:layout_width="640dp"
         android:layout_height="480dp"
@@ -72,17 +72,42 @@
         android:layout_height="480dp"
         android:layout_toEndOf="@id/frame_image_test"
         android:layout_below="@id/preview_button"
-        android:src="@drawable/border" />
-   <!-- <ImageView
-        android:id="@+id/frame_image_test"
-        android:layout_width="320dp"
+        android:src="@drawable/border" />-->
+
+    <com.serenegiant.widget.UVCCameraTextureView
+        android:id="@+id/camera_view"
+        android:layout_width="360dp"
         android:layout_height="240dp"
         android:layout_below="@id/preview_button"
-        android:src="@drawable/border" />
+        android:src="@drawable/border"/>
     <ImageView
+        android:id="@+id/frame_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/camera_view"
+        android:layout_alignBottom="@+id/camera_view"
+        android:layout_alignLeft="@+id/camera_view"
+        android:layout_alignRight="@+id/camera_view"
+        android:src="@drawable/border" />
+<!--    <com.serenegiant.widget.UVCCameraTextureView
         android:id="@+id/frame_image_test_r"
-        android:layout_width="320dp"
+        android:layout_width="360dp"
         android:layout_height="240dp"
-        android:layout_below="@id/frame_image_test"
+        android:layout_below="@id/preview_button"
+        android:layout_toRightOf="@id/frame_image_test"
+        android:src="@drawable/border"/>-->
+
+   <!--  <ImageView
+        android:id="@+id/frame_image_test"
+        android:layout_width="360dp"
+        android:layout_height="240dp"
+        android:layout_below="@id/preview_button"
+        android:src="@drawable/border" />-->
+<!--    <ImageView
+        android:id="@+id/frame_image_test_r"
+        android:layout_width="360dp"
+        android:layout_height="240dp"
+        android:layout_below="@id/preview_button"
+        android:layout_toRightOf="@id/frame_image_test"
         android:src="@drawable/border" />-->
 </RelativeLayout>
