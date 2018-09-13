@@ -27,7 +27,8 @@ import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.view.Surface;
 
-import com.hisign.cameraclient.IVideoEncoder;
+import com.serenegiant.encoder.IVideoEncoder;
+
 
 public interface CameraViewInterface extends IAspectRatioView {
 	public interface Callback {

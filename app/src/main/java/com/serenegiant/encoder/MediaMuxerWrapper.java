@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.hisign.cameraclient;
+package com.serenegiant.encoder;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;

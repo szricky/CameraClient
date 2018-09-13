@@ -21,66 +21,50 @@
  *  may have a different license, see the respective files.
  */
 
-package com.hisign.cameraclient;
+package com.serenegiant.encoder;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.util.Log;
-import android.view.Surface;
-
-import com.serenegiant.glutils.EGLBase;
-import com.serenegiant.glutils.RenderHandler;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
- * Encode texture images as H.264 video
- * using MediaCodec.
- * This class render texture images into recording surface
- * camera from MediaCodec encoder using Open GL|ES
+ * This class receives video images as ByteBuffer(strongly recommend direct ByteBuffer) as NV21(YUV420SP)
+ * and encode them to h.264.
+ * If you use this directly with IFrameCallback, you should know UVCCamera and it backend native libraries
+ * never execute color space conversion. This means that color tone of resulted movie will be different
+ * from that you expected/can see on screen.
  */
-public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
+public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncoder {
 	private static final boolean DEBUG = true;	// TODO set false on release
-	private static final String TAG = "MediaVideoEncoder";
+	private static final String TAG = "MediaVideoBufferEncoder";
 
 	private static final String MIME_TYPE = "video/avc";
 	// parameters for recording
-	private final int mWidth, mHeight;
     private static final int FRAME_RATE = 15;
     private static final float BPP = 0.50f;
 
-    private RenderHandler mRenderHandler;
-    private Surface mSurface;
+	private final int mWidth, mHeight;
+    protected int mColorFormat;
 
-	public MediaVideoEncoder(final MediaMuxerWrapper muxer, final int width, final int height, final MediaEncoderListener listener) {
+	public MediaVideoBufferEncoder(final MediaMuxerWrapper muxer, final int width, final int height, final MediaEncoderListener listener) {
 		super(muxer, listener);
 		if (DEBUG) Log.i(TAG, "MediaVideoEncoder: ");
-		mRenderHandler = RenderHandler.createHandler(TAG);
 		mWidth = width;
 		mHeight = height;
 	}
 
-	public boolean frameAvailableSoon(final float[] tex_matrix) {
-		boolean result;
-		if (result = super.frameAvailableSoon())
-			mRenderHandler.draw(tex_matrix);
-		return result;
-	}
-
-	/**
-	 * This method does not work correctly on this class,
-	 * use #frameAvailableSoon(final float[]) instead
-	 * @return
-	 */
-	@Override
-	public boolean frameAvailableSoon() {
-		boolean result;
-		if (result = super.frameAvailableSoon())
-			mRenderHandler.draw(null);
-		return result;
-	}
+	public void encode(final ByteBuffer buffer) {
+//    	if (DEBUG) Log.v(TAG, "encode:buffer=" + buffer);
+		synchronized (mSync) {
+			if (!mIsCapturing || mRequestStop) return;
+		}
+		encode(buffer, buffer.capacity(), getPTSUs());
+    }
 
 	@Override
 	protected void prepare() throws IOException {
@@ -96,7 +80,7 @@ public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
 		if (DEBUG) Log.i(TAG, "selected codec: " + videoCodecInfo.getName());
 
         final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mWidth, mHeight);
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);	// API >= 18
+        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
         format.setInteger(MediaFormat.KEY_BIT_RATE, calcBitRate());
         format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 10);
@@ -104,9 +88,6 @@ public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
 
         mMediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
         mMediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        // get Surface for encoder input
-        // this method only can call between #configure and #start
-        mSurface = mMediaCodec.createInputSurface();	// API >= 18
         mMediaCodec.start();
         if (DEBUG) Log.i(TAG, "prepare finishing");
         if (mListener != null) {
@@ -116,24 +97,6 @@ public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
         		Log.e(TAG, "prepare:", e);
         	}
         }
-	}
-
-	public void setEglContext(final EGLBase.IContext sharedContext, final int tex_id) {
-		mRenderHandler.setEglContext(sharedContext, tex_id, mSurface, true);
-	}
-
-	@Override
-    protected void release() {
-		if (DEBUG) Log.i(TAG, "release:");
-		if (mSurface != null) {
-			mSurface.release();
-			mSurface = null;
-		}
-		if (mRenderHandler != null) {
-			mRenderHandler.release();
-			mRenderHandler = null;
-		}
-		super.release();
 	}
 
 	private int calcBitRate() {
@@ -147,7 +110,8 @@ public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
      * @param mimeType
      * @return null if no codec matched
      */
-    protected static final MediaCodecInfo selectVideoCodec(final String mimeType) {
+    @SuppressWarnings("deprecation")
+	protected final MediaCodecInfo selectVideoCodec(final String mimeType) {
     	if (DEBUG) Log.v(TAG, "selectVideoCodec:");
 
     	// get the list of available codecs
@@ -165,6 +129,7 @@ public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
                 	if (DEBUG) Log.i(TAG, "codec:" + codecInfo.getName() + ",MIME=" + types[j]);
             		final int format = selectColorFormat(codecInfo, mimeType);
                 	if (format > 0) {
+                		mColorFormat = format;
                 		return codecInfo;
                 	}
                 }
@@ -190,7 +155,7 @@ public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
         int colorFormat;
         for (int i = 0; i < caps.colorFormats.length; i++) {
         	colorFormat = caps.colorFormats[i];
-            if (isRecognizedVideoFormat(colorFormat)) {
+            if (isRecognizedViewoFormat(colorFormat)) {
             	if (result == 0)
             		result = colorFormat;
                 break;
@@ -208,14 +173,14 @@ public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
 	static {
 		recognizedFormats = new int[] {
 //        	MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar,
-//        	MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
-//        	MediaCodecInfo.CodecCapabilities.COLOR_QCOM_FormatYUV420SemiPlanar,
-        	MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
+        	MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
+        	MediaCodecInfo.CodecCapabilities.COLOR_QCOM_FormatYUV420SemiPlanar,
+//        	MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
 		};
 	}
 
-    private static final boolean isRecognizedVideoFormat(final int colorFormat) {
-		if (DEBUG) Log.i(TAG, "isRecognizedVideoFormat:colorFormat=" + colorFormat);
+    private static final boolean isRecognizedViewoFormat(final int colorFormat) {
+		if (DEBUG) Log.i(TAG, "isRecognizedViewoFormat:colorFormat=" + colorFormat);
     	final int n = recognizedFormats != null ? recognizedFormats.length : 0;
     	for (int i = 0; i < n; i++) {
     		if (recognizedFormats[i] == colorFormat) {

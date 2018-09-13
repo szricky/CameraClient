@@ -21,50 +21,42 @@
  *  may have a different license, see the respective files.
  */
 
-package com.hisign.cameraclient;
+package com.serenegiant.encoder;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.util.Log;
+import android.view.Surface;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
-/**
- * This class receives video images as ByteBuffer(strongly recommend direct ByteBuffer) as NV21(YUV420SP)
- * and encode them to h.264.
- * If you use this directly with IFrameCallback, you should know UVCCamera and it backend native libraries
- * never execute color space conversion. This means that color tone of resulted movie will be different
- * from that you expected/can see on screen.
- */
-public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncoder {
+public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
 	private static final boolean DEBUG = true;	// TODO set false on release
-	private static final String TAG = "MediaVideoBufferEncoder";
+	private static final String TAG = "MediaSurfaceEncoder";
 
 	private static final String MIME_TYPE = "video/avc";
 	// parameters for recording
+	private final int mWidth, mHeight;
     private static final int FRAME_RATE = 15;
     private static final float BPP = 0.50f;
 
-	private final int mWidth, mHeight;
-    protected int mColorFormat;
+    private Surface mSurface;
 
-	public MediaVideoBufferEncoder(final MediaMuxerWrapper muxer, final int width, final int height, final MediaEncoderListener listener) {
+	public MediaSurfaceEncoder(final MediaMuxerWrapper muxer, final int width, final int height, final MediaEncoderListener listener) {
 		super(muxer, listener);
 		if (DEBUG) Log.i(TAG, "MediaVideoEncoder: ");
 		mWidth = width;
 		mHeight = height;
 	}
 
-	public void encode(final ByteBuffer buffer) {
-//    	if (DEBUG) Log.v(TAG, "encode:buffer=" + buffer);
-		synchronized (mSync) {
-			if (!mIsCapturing || mRequestStop) return;
-		}
-		encode(buffer, buffer.capacity(), getPTSUs());
-    }
+	/**
+	* Returns the encoder's input surface.
+	*/
+	public Surface getInputSurface() {
+		return mSurface;
+	}
 
 	@Override
 	protected void prepare() throws IOException {
@@ -80,7 +72,7 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
 		if (DEBUG) Log.i(TAG, "selected codec: " + videoCodecInfo.getName());
 
         final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mWidth, mHeight);
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
+        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);	// API >= 18
         format.setInteger(MediaFormat.KEY_BIT_RATE, calcBitRate());
         format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 10);
@@ -88,6 +80,9 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
 
         mMediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
         mMediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        // get Surface for encoder input
+        // this method only can call between #configure and #start
+        mSurface = mMediaCodec.createInputSurface();	// API >= 18
         mMediaCodec.start();
         if (DEBUG) Log.i(TAG, "prepare finishing");
         if (mListener != null) {
@@ -97,6 +92,16 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
         		Log.e(TAG, "prepare:", e);
         	}
         }
+	}
+
+	@Override
+    protected void release() {
+		if (DEBUG) Log.i(TAG, "release:");
+		if (mSurface != null) {
+			mSurface.release();
+			mSurface = null;
+		}
+		super.release();
 	}
 
 	private int calcBitRate() {
@@ -110,8 +115,7 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
      * @param mimeType
      * @return null if no codec matched
      */
-    @SuppressWarnings("deprecation")
-	protected final MediaCodecInfo selectVideoCodec(final String mimeType) {
+    protected static final MediaCodecInfo selectVideoCodec(final String mimeType) {
     	if (DEBUG) Log.v(TAG, "selectVideoCodec:");
 
     	// get the list of available codecs
@@ -129,7 +133,6 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
                 	if (DEBUG) Log.i(TAG, "codec:" + codecInfo.getName() + ",MIME=" + types[j]);
             		final int format = selectColorFormat(codecInfo, mimeType);
                 	if (format > 0) {
-                		mColorFormat = format;
                 		return codecInfo;
                 	}
                 }
@@ -155,7 +158,7 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
         int colorFormat;
         for (int i = 0; i < caps.colorFormats.length; i++) {
         	colorFormat = caps.colorFormats[i];
-            if (isRecognizedViewoFormat(colorFormat)) {
+            if (isRecognizedVideoFormat(colorFormat)) {
             	if (result == 0)
             		result = colorFormat;
                 break;
@@ -173,14 +176,14 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
 	static {
 		recognizedFormats = new int[] {
 //        	MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar,
-        	MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
-        	MediaCodecInfo.CodecCapabilities.COLOR_QCOM_FormatYUV420SemiPlanar,
-//        	MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
+//        	MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
+//        	MediaCodecInfo.CodecCapabilities.COLOR_QCOM_FormatYUV420SemiPlanar,
+        	MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
 		};
 	}
 
-    private static final boolean isRecognizedViewoFormat(final int colorFormat) {
-		if (DEBUG) Log.i(TAG, "isRecognizedViewoFormat:colorFormat=" + colorFormat);
+    private static final boolean isRecognizedVideoFormat(final int colorFormat) {
+		if (DEBUG) Log.i(TAG, "isRecognizedVideoFormat:colorFormat=" + colorFormat);
     	final int n = recognizedFormats != null ? recognizedFormats.length : 0;
     	for (int i = 0; i < n; i++) {
     		if (recognizedFormats[i] == colorFormat) {

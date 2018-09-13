@@ -34,9 +34,9 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 
-import com.hisign.cameraclient.IVideoEncoder;
-import com.hisign.cameraclient.MediaEncoder;
-import com.hisign.cameraclient.MediaVideoEncoder;
+import com.serenegiant.encoder.IVideoEncoder;
+import com.serenegiant.encoder.MediaEncoder;
+import com.serenegiant.encoder.MediaVideoEncoder;
 import com.serenegiant.glutils.EGLBase;
 import com.serenegiant.glutils.GLDrawer2D;
 import com.serenegiant.glutils.es1.GLHelper;

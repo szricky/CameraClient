@@ -68,6 +68,7 @@ public class CameraFragment extends BaseFragment {
 	private static ImageView mImageViewR;*/
 	private CameraViewInterface mCameraView;
 
+    private CameraViewInterface mCameraView1;
 
 	private ToggleButton mPreviewButton;
 
@@ -164,7 +165,8 @@ public class CameraFragment extends BaseFragment {
 		mImageViewR = (ImageView) rootView.findViewById(R.id.frame_image_test_r);*/
 		mCameraView = (CameraViewInterface)rootView.findViewById(R.id.camera_view);
 		mCameraView.setAspectRatio(DEFAULT_WIDTH / (float)DEFAULT_HEIGHT);
-
+        mCameraView1 = (CameraViewInterface)rootView.findViewById(R.id.camera_view1);
+        mCameraView1.setAspectRatio(DEFAULT_WIDTH / (float)DEFAULT_HEIGHT);
 		return rootView;
 	}
 
@@ -290,14 +292,21 @@ public class CameraFragment extends BaseFragment {
 	private final ICameraClientCallback mCameraListener = new ICameraClientCallback() {
 		@Override
 		public void onConnect() {
-			if (DEBUG) Log.v(TAG, "onConnect:");
+			if (DEBUG) Log.v(TAG, "mCameraListener onConnect:");
 			mCameraClient.addSurface(mCameraView.getSurface(), false);
 
 			enableButtons(true);
 			setPreviewButton(true);
 		}
 
-		@Override
+        @Override
+        public void onConnect1() {
+            if (DEBUG) Log.v(TAG, "mCameraListener onConnect111:");
+            mCameraClient.addSurface(mCameraView1.getSurface(), false);
+
+        }
+
+        @Override
 		public void onDisconnect() {
 			if (DEBUG) Log.v(TAG, "onDisconnect:");
 			setPreviewButton(false);
@@ -356,6 +365,8 @@ public class CameraFragment extends BaseFragment {
 		public void onCheckedChanged(final CompoundButton buttonView, final boolean isChecked) {
 			if (isChecked) {
 				mCameraClient.addSurface(mCameraView.getSurface(), false);
+                mCameraClient.addSurface(mCameraView1.getSurface(), false);
+
 //				mCameraClient.addSurface(mCameraViewSub.getHolder().getSurface(), false);
 			} else {
 				//mCameraClient.removeSurface(mCameraView.getSurface());

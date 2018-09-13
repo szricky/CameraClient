@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.hisign.cameraclient;
+package com.serenegiant.encoder;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -30,11 +30,20 @@ import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 
+import com.serenegiant.glutils.EGLBase;
+import com.serenegiant.glutils.RenderHandler;
+
 import java.io.IOException;
 
-public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
+/**
+ * Encode texture images as H.264 video
+ * using MediaCodec.
+ * This class render texture images into recording surface
+ * camera from MediaCodec encoder using Open GL|ES
+ */
+public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
 	private static final boolean DEBUG = true;	// TODO set false on release
-	private static final String TAG = "MediaSurfaceEncoder";
+	private static final String TAG = "MediaVideoEncoder";
 
 	private static final String MIME_TYPE = "video/avc";
 	// parameters for recording
@@ -42,20 +51,35 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
     private static final int FRAME_RATE = 15;
     private static final float BPP = 0.50f;
 
+    private RenderHandler mRenderHandler;
     private Surface mSurface;
 
-	public MediaSurfaceEncoder(final MediaMuxerWrapper muxer, final int width, final int height, final MediaEncoderListener listener) {
+	public MediaVideoEncoder(final MediaMuxerWrapper muxer, final int width, final int height, final MediaEncoderListener listener) {
 		super(muxer, listener);
 		if (DEBUG) Log.i(TAG, "MediaVideoEncoder: ");
+		mRenderHandler = RenderHandler.createHandler(TAG);
 		mWidth = width;
 		mHeight = height;
 	}
 
+	public boolean frameAvailableSoon(final float[] tex_matrix) {
+		boolean result;
+		if (result = super.frameAvailableSoon())
+			mRenderHandler.draw(tex_matrix);
+		return result;
+	}
+
 	/**
-	* Returns the encoder's input surface.
-	*/
-	public Surface getInputSurface() {
-		return mSurface;
+	 * This method does not work correctly on this class,
+	 * use #frameAvailableSoon(final float[]) instead
+	 * @return
+	 */
+	@Override
+	public boolean frameAvailableSoon() {
+		boolean result;
+		if (result = super.frameAvailableSoon())
+			mRenderHandler.draw(null);
+		return result;
 	}
 
 	@Override
@@ -94,12 +118,20 @@ public class MediaSurfaceEncoder extends MediaEncoder implements IVideoEncoder {
         }
 	}
 
+	public void setEglContext(final EGLBase.IContext sharedContext, final int tex_id) {
+		mRenderHandler.setEglContext(sharedContext, tex_id, mSurface, true);
+	}
+
 	@Override
     protected void release() {
 		if (DEBUG) Log.i(TAG, "release:");
 		if (mSurface != null) {
 			mSurface.release();
 			mSurface = null;
+		}
+		if (mRenderHandler != null) {
+			mRenderHandler.release();
+			mRenderHandler = null;
 		}
 		super.release();
 	}

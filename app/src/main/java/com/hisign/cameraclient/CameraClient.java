@@ -371,12 +371,17 @@ public class CameraClient implements ICameraClient {
 			}
 
 			@Override
-			public void onConnected() throws RemoteException {
-				if (DEBUG) Log.v(TAG_CAMERA, "onConnected:");
+			public void onConnected(int camera) throws RemoteException {
+				if (DEBUG) Log.v(TAG_CAMERA, "callbacks from service onConnected:");
 				mIsConnected = true;
 				if (mParent != null) {
 					if (mParent.mListener != null) {
-						mParent.mListener.onConnect();
+						if (camera ==0 ){
+							mParent.mListener.onConnect();
+						}else {
+							mParent.mListener.onConnect1();
+
+						}
 					}
 				}
 			}
@@ -426,12 +431,16 @@ public class CameraClient implements ICameraClient {
 						if (mParent != null) {
 							if (mParent.mListener != null) {
 								mParent.mListener.onConnect();
+								mParent.mListener.onConnect1();
+
 							}
 						}
 					} else {
 						if (mParent != null) {
 							if (mParent.mListener != null) {
 								mParent.mListener.onConnect();
+								mParent.mListener.onConnect1();
+
 							}
 						}
 					}

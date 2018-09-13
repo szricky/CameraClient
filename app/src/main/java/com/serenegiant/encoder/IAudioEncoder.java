@@ -21,15 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.hisign.cameraclient;
+package com.serenegiant.encoder;
 
-import android.graphics.Bitmap;
-
-public interface ICameraClientCallback {
-	public void onConnect();
-    public void onConnect1();
-
-    public void onDisconnect();
-	public void handleData(Bitmap bitmap);
-	public void handleDataR(Bitmap bitmap);
+public interface IAudioEncoder {
 }

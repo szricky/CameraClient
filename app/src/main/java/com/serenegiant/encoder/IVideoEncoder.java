@@ -21,7 +21,8 @@
  *  may have a different license, see the respective files.
  */
 
-package com.hisign.cameraclient;
+package com.serenegiant.encoder;
 
-public interface IAudioEncoder {
+public interface IVideoEncoder {
+	public boolean frameAvailableSoon();
 }

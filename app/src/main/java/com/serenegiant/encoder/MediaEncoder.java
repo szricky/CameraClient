@@ -21,15 +21,15 @@
  *  may have a different license, see the respective files.
  */
 
-package com.hisign.cameraclient;
-
-import android.media.MediaCodec;
-import android.media.MediaFormat;
-import android.util.Log;
+package com.serenegiant.encoder;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
+
+import android.media.MediaCodec;
+import android.media.MediaFormat;
+import android.util.Log;
 
 public abstract class MediaEncoder implements Runnable {
 	private static final boolean DEBUG = true;	// TODO set false on release
