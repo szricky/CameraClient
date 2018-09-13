@@ -39,6 +39,7 @@ interface CameraInterface {
 	void registerCallback(CameraCallback cb);
     void unregisterCallback(CameraCallback cb);
 	void addSurface(int serviceId, int id_surface, in Surface surface, boolean isRecordable);
+	void addSurface1(int serviceId, int id_surface, in Surface surface, boolean isRecordable);
 
 //	void addSurface(int serviceId);//, int id_surface, in Surface surface, boolean isRecordable);
 //	void removeSurface(int serviceId, int id_surface);

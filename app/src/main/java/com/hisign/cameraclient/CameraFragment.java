@@ -283,7 +283,13 @@ public class CameraFragment extends BaseFragment {
 			enableButtons(false);
 			if (mCameraClient == null)
 				mCameraClient = new CameraClient(getActivity(), mCameraListener);
-			mCameraClient.select(list.get(index));
+            Log.d(TAG,"mCameraClient select");
+            mCameraClient.select(list.get(index));
+			if (list.size()>index+1){
+			    Log.d(TAG,"mCameraClient select1");
+                mCameraClient.select1(list.get(index+1));
+
+            }
 			mCameraClient.resize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 			mCameraClient.connect(0x1a90,0x1a20);//实际摄像头pid  0x1a90可见   0x1a20红外
 		}
@@ -302,7 +308,7 @@ public class CameraFragment extends BaseFragment {
         @Override
         public void onConnect1() {
             if (DEBUG) Log.v(TAG, "mCameraListener onConnect111:");
-            mCameraClient.addSurface(mCameraView1.getSurface(), false);
+            mCameraClient.addSurface1(mCameraView1.getSurface(), false);
 
         }
 
@@ -341,6 +347,11 @@ public class CameraFragment extends BaseFragment {
 					if (mCameraClient == null)
 						mCameraClient = new CameraClient(getActivity(), mCameraListener);
 					mCameraClient.select(list.get(0));
+                    if (list.size()> 1){
+                        Log.d(TAG,"mCameraClient select1");
+                        mCameraClient.select1(list.get(1));
+
+                    }
 					mCameraClient.resize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 					mCameraClient.connect(0x1a90,0x1a20);
 					setPreviewButton(false);
@@ -365,7 +376,7 @@ public class CameraFragment extends BaseFragment {
 		public void onCheckedChanged(final CompoundButton buttonView, final boolean isChecked) {
 			if (isChecked) {
 				mCameraClient.addSurface(mCameraView.getSurface(), false);
-                mCameraClient.addSurface(mCameraView1.getSurface(), false);
+                mCameraClient.addSurface1(mCameraView1.getSurface(), false);
 
 //				mCameraClient.addSurface(mCameraViewSub.getHolder().getSurface(), false);
 			} else {

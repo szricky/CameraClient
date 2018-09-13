@@ -96,6 +96,14 @@ public class CameraClient implements ICameraClient {
 	}
 
 	@Override
+	public void select1(final UsbDevice device) {
+		if (DEBUG) Log.v(TAG, "select:device=" + (device != null ? device.getDeviceName() : null));
+		mUsbDevice = device;
+		final CameraHandler handler = mWeakHandler.get();
+		handler.sendMessage(handler.obtainMessage(MSG_SELECT_1, device));
+	}
+
+	@Override
 	public void release() {
 		if (DEBUG) Log.v(TAG, "release:" + this);
 		mUsbDevice = null;
@@ -129,6 +137,13 @@ public class CameraClient implements ICameraClient {
 		if (DEBUG) Log.v(TAG, "addSurface:surface=" + surface + ",hash=" + surface.hashCode());
 		final CameraHandler handler = mWeakHandler.get();
 		handler.sendMessage(handler.obtainMessage(MSG_ADD_SURFACE, isRecordable ? 1 : 0, 0, surface));
+	}
+
+	@Override
+	public void addSurface1(Surface surface, boolean isRecordable) {
+		if (DEBUG) Log.v(TAG, "addSurface1:surface=" + surface + ",hash=" + surface.hashCode());
+		final CameraHandler handler = mWeakHandler.get();
+		handler.sendMessage(handler.obtainMessage(MSG_ADD_SURFACE_1, isRecordable ? 1 : 0, 0, surface));
 	}
 
 
@@ -210,9 +225,13 @@ public class CameraClient implements ICameraClient {
 
 
 	private static final int MSG_SELECT = 0;
+	private static final int MSG_SELECT_1 = 11;
+
 	private static final int MSG_CONNECT = 1;
 	private static final int MSG_DISCONNECT = 2;
 	private static final int MSG_ADD_SURFACE = 3;
+	private static final int MSG_ADD_SURFACE_1 = 10;
+
 	private static final int MSG_REMOVE_SURFACE = 4;
 	private static final int MSG_START_RECORDING = 6;
 	private static final int MSG_STOP_RECORDING = 7;
@@ -244,6 +263,9 @@ public class CameraClient implements ICameraClient {
 			case MSG_SELECT:
 				mCameraTask.handleSelect((UsbDevice)msg.obj);
 				break;
+			case MSG_SELECT_1:
+				mCameraTask.handleSelect1((UsbDevice)msg.obj);
+				break;
 			case MSG_CONNECT:
 				int pid_0 = (int) msg.arg1;
 				int pid_1 = (int) msg.arg2;
@@ -254,6 +276,9 @@ public class CameraClient implements ICameraClient {
 				break;
 			case MSG_ADD_SURFACE:
 				mCameraTask.handleAddSurface((Surface)msg.obj, msg.arg1 != 0);
+				break;
+			case MSG_ADD_SURFACE_1:
+				mCameraTask.handleAddSurface1((Surface)msg.obj, msg.arg1 != 0);
 				break;
 			case MSG_REMOVE_SURFACE:
 				mCameraTask.handleRemoveSurface((Surface)msg.obj);
@@ -288,6 +313,7 @@ public class CameraClient implements ICameraClient {
 			private boolean mIsConnected;
 			private Handler mHander = new Handler(this);
 			private int mServiceId;
+			private int mServiceId_1;
 
 
 			private CameraTask(final CameraClient parent) {
@@ -377,8 +403,10 @@ public class CameraClient implements ICameraClient {
 				if (mParent != null) {
 					if (mParent.mListener != null) {
 						if (camera ==0 ){
+							Log.d(TAG,"mListener onConnect ,camera = " + camera);
 							mParent.mListener.onConnect();
 						}else {
+							Log.d(TAG,"mListener onConnect1 ,camera = " + camera);
 							mParent.mListener.onConnect1();
 
 						}
@@ -401,6 +429,7 @@ public class CameraClient implements ICameraClient {
 						}
 					}*/
 					mServiceId = device.hashCode();
+					Log.d(TAG,"mServiceId = " + mServiceId);
 
 					try {
                          service.registerCallback(this);
@@ -410,7 +439,22 @@ public class CameraClient implements ICameraClient {
 				}
 			}
 
+			public void handleSelect1(final UsbDevice device) {
+				if (DEBUG) Log.v(TAG_CAMERA, "handleSelect:");
+				final CameraInterface service = mParent.getService();
+				if (service != null) {
 
+				/*	if (service != null) {
+						try {
+							mServiceId = service.select(device, this);
+						} catch (final RemoteException e) {
+							if (DEBUG) Log.e(TAG_CAMERA, "select:", e);
+						}
+					}*/
+					mServiceId_1 = device.hashCode();
+					Log.d(TAG,"mServiceId_1 = " + mServiceId_1);
+				}
+			}
 
 			public void handleRelease() {
 				if (DEBUG) Log.v(TAG_CAMERA, "handleRelease:");
@@ -485,6 +529,16 @@ public class CameraClient implements ICameraClient {
 					}
 			}
 
+			public void handleAddSurface1(final Surface surface, final boolean isRecordable) {
+				if (DEBUG) Log.v(TAG_CAMERA, "handleAddSurface1:addSurface=" + surface + ",hash=" + surface.hashCode());
+				final CameraInterface service = mParent.getService();
+				if (service != null)
+					try {
+						service.addSurface1(mServiceId_1, surface.hashCode(), surface, isRecordable);
+					} catch (final RemoteException e) {
+						if (DEBUG) Log.e(TAG_CAMERA, "handleAddSurface:", e);
+					}
+			}
 
 
 			public void handleRemoveSurface(final Surface surface) {
