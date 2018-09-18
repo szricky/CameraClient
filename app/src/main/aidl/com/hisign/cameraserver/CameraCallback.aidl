@@ -23,11 +23,14 @@ package com.hisign.cameraserver;
  * Files in the jni/libjpeg, jni/libusb and jin/libuvc folder may have a different license, see the respective files.
 */
 import android.graphics.Bitmap;
+import com.hisign.cameraserver.TestPra;
 
 interface CameraCallback {
 	//oneway void onConnected();
 	//oneway void onDisConnected();
-	void onFrame(inout byte[] data,int camera);
+	//void onFrame(in byte[] data,int camera);
+	    void onFrame(in TestPra testPra,int camera);
+
 	oneway void onConnected(int camera);
 
 }

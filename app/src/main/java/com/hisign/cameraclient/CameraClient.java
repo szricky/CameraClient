@@ -48,6 +48,7 @@ import android.view.Surface;
 
 import com.hisign.cameraserver.CameraCallback;
 import com.hisign.cameraserver.CameraInterface;
+import com.hisign.cameraserver.TestPra;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -221,7 +222,6 @@ public class CameraClient implements ICameraClient {
 	private static final int MSG_IMAGE_VIEW = 10;
 	private static final int MSG_IMAGE_VIEW_R = 12;
 
-	private static final int MSG_SET_THREAD_CALL_BACK = 11;
 
 
 	private static final int MSG_SELECT = 0;
@@ -305,13 +305,19 @@ public class CameraClient implements ICameraClient {
 		private static Bitmap bmp_l = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
 		private static Bitmap bmp_r = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
 
+		private Handler mHandler;
+
+
+
+
+
 		private static final class CameraTask extends CameraCallback.Stub implements Runnable,Handler.Callback {
 			private static final String TAG_CAMERA = "CameraClientThread";
 			private final Object mSync = new Object();
 			private CameraClient mParent;
 			private CameraHandler mHandler;
 			private boolean mIsConnected;
-			private Handler mHander = new Handler(this);
+		//	private Handler mHander = new Handler(this);
 			private int mServiceId;
 			private int mServiceId_1;
 
@@ -319,10 +325,10 @@ public class CameraClient implements ICameraClient {
 			private CameraTask(final CameraClient parent) {
 				mParent = parent;
 			}
+			private static int[] rgba = new int[640*480];
 
 			public void rawByteArray2RGBABitmap2(Bitmap bitmap,byte[] data, int width, int height) {
 				int frameSize = width * height;
-				int[] rgba = new int[frameSize];
 				for (int h = 0; h < height; h++)
 					for (int w = 0; w < width; w++) {
 						int y = (0xff & ((int) data[h * width + w]));
@@ -377,10 +383,15 @@ public class CameraClient implements ICameraClient {
 // callbacks from service
 
 
-			@Override
-			public void onFrame(byte[] data, int camera) throws RemoteException {
+
+		/*	@Override
+			public void onFrame(final byte[] data, int camera) throws RemoteException {
 				Log.d(TAG,"onFrame ,Data length is : " + data.length );
-				if (camera == 0){
+
+				mParent.mListener.handleData(data,camera);
+
+
+				*//*if (camera == 0){
 					Message obtainMessage = mHander.obtainMessage();
 					obtainMessage.obj= data;
 					obtainMessage.arg1=camera;
@@ -392,8 +403,16 @@ public class CameraClient implements ICameraClient {
 					obtainMessage.arg1=camera;
 					obtainMessage.what= MSG_IMAGE_VIEW_R;
 					mHander.sendMessage(obtainMessage);
-				}
+				}*//*
 
+			}*/
+			private static byte[] mBytes;
+			@Override
+			public void onFrame(TestPra testPra, int camera) throws RemoteException {
+				/*Log.d(TAG,"Bytes length = " + testPra.getBytes().length);
+				Log.d(TAG,"onFrame ,Data length is : " + testPra.getBytes().length );*/
+				mBytes = testPra.getBytes();
+				mParent.mListener.handleData(mBytes,camera);
 			}
 
 			@Override
@@ -578,6 +597,9 @@ public class CameraClient implements ICameraClient {
 						byte[] data = (byte[]) msg.obj;
 						rawByteArray2RGBABitmap2(bmp_l,data ,640,480);
 						handleImage(bmp_l);
+						data = null;
+						msg.obj = null;
+
 						break;
 					case MSG_IMAGE_VIEW_R:
 						Log.d(TAG,"CAMERA_DATA_R" + System.currentTimeMillis());
@@ -585,6 +607,8 @@ public class CameraClient implements ICameraClient {
 						rawByteArray2RGBABitmap2(bmp_r,data1 ,640,480);
 						Log.d(TAG,"CAMERA_DATA_R finish " + System.currentTimeMillis() );
 						handleImageR(bmp_r);
+						data1 = null;
+						msg.obj = null;
 						break;
 					default:
 						break;

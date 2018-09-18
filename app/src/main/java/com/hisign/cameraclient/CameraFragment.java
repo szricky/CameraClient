@@ -64,8 +64,8 @@ public class CameraFragment extends BaseFragment {
 	private USBMonitor mUSBMonitor;
 	private ICameraClient mCameraClient;
 
-	/*private static ImageView mImageView;
-	private static ImageView mImageViewR;*/
+	private static ImageView mImageView;
+	private static ImageView mImageViewR;
 	private CameraViewInterface mCameraView;
 
     private CameraViewInterface mCameraView1;
@@ -106,13 +106,13 @@ public class CameraFragment extends BaseFragment {
 					case IMAGE_VIEW:
 						Log.d(TAG,"setImageBitmap");
 						Bitmap bitmap = (Bitmap) msg.obj;
-					//	mImageView.setImageBitmap(bitmap);
+						mImageView.setImageBitmap(bitmap);
 						break;
 					case IMAGE_VIEW_R:
 						Log.d(TAG,"setImageBitmap");
 						Bitmap bitmap1 = (Bitmap) msg.obj;
 
-						//mImageViewR.setImageBitmap(bitmap1);
+						mImageViewR.setImageBitmap(bitmap1);
 
 						break;
 				}
@@ -130,7 +130,7 @@ public class CameraFragment extends BaseFragment {
 			mUSBMonitor.setDeviceFilter(filters);
 		}
 		mHandler =new MyHandler(this);
-
+		mNV21ToBitmap = new NV21ToBitmap(getActivity());
 
 	/*	mHandler = new Handler(){
 			public void handleMessage(Message msg) {
@@ -161,8 +161,8 @@ public class CameraFragment extends BaseFragment {
 		mPreviewButton = (ToggleButton)rootView.findViewById(R.id.preview_button);
 		setPreviewButton(false);
 		mPreviewButton.setEnabled(false);
-		/*mImageView = (ImageView) rootView.findViewById(R.id.frame_image_test);
-		mImageViewR = (ImageView) rootView.findViewById(R.id.frame_image_test_r);*/
+		mImageView = (ImageView) rootView.findViewById(R.id.frame_image_test);
+		mImageViewR = (ImageView) rootView.findViewById(R.id.frame_image_test_r);
 		mCameraView = (CameraViewInterface)rootView.findViewById(R.id.camera_view);
 		mCameraView.setAspectRatio(DEFAULT_WIDTH / (float)DEFAULT_HEIGHT);
         mCameraView1 = (CameraViewInterface)rootView.findViewById(R.id.camera_view1);
@@ -294,7 +294,35 @@ public class CameraFragment extends BaseFragment {
 			mCameraClient.connect(0x1a90,0x1a20);//实际摄像头pid  0x1a90可见   0x1a20红外
 		}
 	}
+	private static Bitmap bmp_l = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
+	private static Bitmap bmp_r = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
+	private static int[] rgba = new int[640*480];
 
+	private NV21ToBitmap mNV21ToBitmap;
+
+	public static void rawByteArray2RGBABitmap2(Bitmap bitmap,final byte[] data, int width, int height) {
+		int frameSize = width * height;
+		for (int h = 0; h < height; h++)
+			for (int w = 0; w < width; w++) {
+				int y = (0xff & ((int) data[h * width + w]));
+				int u = (0xff & ((int) data[frameSize + (h >> 1) * width + (w & ~1) + 0]));
+				int v = (0xff & ((int) data[frameSize + (h >> 1) * width + (w & ~1) + 1]));
+				y = y < 16 ? 16 : y;
+
+				int b = Math.round(1.164f * (y-16) + 2.018f * (u - 128));
+				int g = Math.round(1.164f * (y-16) - 0.813f * (v - 128) - 0.391f * (u - 128));
+				int r =  Math.round(1.164f * (y-16) + 1.596f*(v - 128));
+
+				r = r < 0 ? 0 : (r > 255 ? 255 : r);
+				g = g < 0 ? 0 : (g > 255 ? 255 : g);
+				b = b < 0 ? 0 : (b > 255 ? 255 : b);
+
+				rgba[h * width + w] = 0xff000000 + (r << 16) + (g << 8) + b;
+			}
+
+		bitmap.setPixels(rgba, 0 , width, 0, 0, width, height);
+		//return bmp;
+	}
 	private final ICameraClientCallback mCameraListener = new ICameraClientCallback() {
 		@Override
 		public void onConnect() {
@@ -317,6 +345,18 @@ public class CameraFragment extends BaseFragment {
 			if (DEBUG) Log.v(TAG, "onDisconnect:");
 			setPreviewButton(false);
 			enableButtons(false);
+		}
+
+		@Override
+		public void handleData(final byte[] data, int camera) {
+			if (camera ==0){
+				rawByteArray2RGBABitmap2(bmp_l,data ,640,480);
+
+				mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW, bmp_l));
+			}else {
+				rawByteArray2RGBABitmap2(bmp_r,data ,640,480);
+				mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW_R, bmp_r));
+			}
 		}
 
 		@Override

@@ -18,7 +18,7 @@ android {
     }
     android.applicationVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "CameraClient20180904_1.apk";
+            outputFileName = "CameraClient20180918_1.apk";
         }
     }
 }

@@ -30,6 +30,9 @@ public interface ICameraClientCallback {
     public void onConnect1();
 
     public void onDisconnect();
+	public void handleData(byte[] data,int camera);
+
+
 	public void handleData(Bitmap bitmap);
 	public void handleDataR(Bitmap bitmap);
 }
