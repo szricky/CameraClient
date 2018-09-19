@@ -111,7 +111,6 @@ public class CameraFragment extends BaseFragment {
 					case IMAGE_VIEW_R:
 						Log.d(TAG,"setImageBitmap");
 						Bitmap bitmap1 = (Bitmap) msg.obj;
-
 						mImageViewR.setImageBitmap(bitmap1);
 
 						break;
@@ -132,22 +131,7 @@ public class CameraFragment extends BaseFragment {
 		mHandler =new MyHandler(this);
 		mNV21ToBitmap = new NV21ToBitmap(getActivity());
 
-	/*	mHandler = new Handler(){
-			public void handleMessage(Message msg) {
-				switch (msg.what) {
-					case IMAGE_VIEW:
-						Log.d(TAG,"setImageBitmap");
-						Bitmap bitmap = (Bitmap) msg.obj;
-					    mImageView.setImageBitmap(bitmap);
-						break;
-					case IMAGE_VIEW_R:
-						Log.d(TAG,"setImageBitmap");
-						Bitmap bitmap1 = (Bitmap) msg.obj;
-						mImageViewR.setImageBitmap(bitmap1);
-						break;
-				}
-			}
-	};*/
+
 	}
 
 	@Override
@@ -215,7 +199,7 @@ public class CameraFragment extends BaseFragment {
 		@Override
 		public void onAttach(final UsbDevice device) {
 			if (DEBUG) Log.v(TAG, "OnDeviceConnectListener#onAttach:");
-			if (!updateCameraDialog() && mCameraView.hasSurface()){// && (mCameraView.hasSurface())) {
+			if (!updateCameraDialog() && mCameraView.hasSurface() && mCameraView1.hasSurface()){// && (mCameraView.hasSurface())) {
 				tryOpenUVCCamera(true);
 			}
 		}
@@ -349,14 +333,18 @@ public class CameraFragment extends BaseFragment {
 
 		@Override
 		public void handleData(final byte[] data, int camera) {
-			if (camera ==0){
-				rawByteArray2RGBABitmap2(bmp_l,data ,640,480);
-
-				mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW, bmp_l));
-			}else {
-				rawByteArray2RGBABitmap2(bmp_r,data ,640,480);
-				mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW_R, bmp_r));
+			if (data != null){
+				if (camera ==0){
+					rawByteArray2RGBABitmap2(bmp_l,data ,640,480);
+					//bmp_l =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
+					mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW, bmp_l));
+				}else {
+					rawByteArray2RGBABitmap2(bmp_r,data ,640,480);
+					//bmp_r =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
+					mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW_R, bmp_r));
+				}
 			}
+
 		}
 
 		@Override

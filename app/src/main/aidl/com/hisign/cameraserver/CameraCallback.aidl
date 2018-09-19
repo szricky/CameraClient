@@ -29,7 +29,7 @@ interface CameraCallback {
 	//oneway void onConnected();
 	//oneway void onDisConnected();
 	//void onFrame(in byte[] data,int camera);
-	    void onFrame(in TestPra testPra,int camera);
+	  oneway  void onFrame(in TestPra testPra,int camera);
 
 	oneway void onConnected(int camera);
 
