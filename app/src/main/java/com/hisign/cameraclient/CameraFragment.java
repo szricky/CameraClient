@@ -26,6 +26,7 @@ package com.hisign.cameraclient;
 import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.os.Handler;
@@ -48,6 +49,10 @@ import com.serenegiant.usb.USBMonitor.OnDeviceConnectListener;
 import com.serenegiant.usb.USBMonitor.UsbControlBlock;
 import com.serenegiant.widget.CameraViewInterface;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
@@ -307,7 +312,35 @@ public class CameraFragment extends BaseFragment {
 		bitmap.setPixels(rgba, 0 , width, 0, 0, width, height);
 		//return bmp;
 	}
-	private final ICameraClientCallback mCameraListener = new ICameraClientCallback() {
+
+
+	static BitmapFactory.Options options = new BitmapFactory.Options();
+	public static Bitmap byteToBitmap(byte[] imgByte) {
+		InputStream input = null;
+		Bitmap bitmap = null;
+
+
+		input = new ByteArrayInputStream(imgByte);
+		SoftReference softRef = new SoftReference(BitmapFactory.decodeStream(
+				input, null, options));
+		bitmap = (Bitmap) softRef.get();
+		if (imgByte != null) {
+			imgByte = null;
+		}
+
+		try {
+			if (input != null) {
+				input.close();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return bitmap;
+	}
+
+
+		private final ICameraClientCallback mCameraListener = new ICameraClientCallback() {
 		@Override
 		public void onConnect() {
 			if (DEBUG) Log.v(TAG, "mCameraListener onConnect:");
@@ -335,11 +368,15 @@ public class CameraFragment extends BaseFragment {
 		public void handleData(final byte[] data, int camera) {
 			if (data != null){
 				if (camera ==0){
+
+				//	bmp_l = byteToBitmap(data);
 					rawByteArray2RGBABitmap2(bmp_l,data ,640,480);
 					//bmp_l =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
 					mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW, bmp_l));
 				}else {
-					rawByteArray2RGBABitmap2(bmp_r,data ,640,480);
+				//	bmp_r= byteToBitmap(data);
+
+						rawByteArray2RGBABitmap2(bmp_r,data ,640,480);
 					//bmp_r =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
 					mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW_R, bmp_r));
 				}
