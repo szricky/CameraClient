@@ -26,7 +26,6 @@ package com.hisign.cameraclient;
 import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.os.Handler;
@@ -49,10 +48,6 @@ import com.serenegiant.usb.USBMonitor.OnDeviceConnectListener;
 import com.serenegiant.usb.USBMonitor.UsbControlBlock;
 import com.serenegiant.widget.CameraViewInterface;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
@@ -61,8 +56,8 @@ public class CameraFragment extends BaseFragment {
 	private static final boolean DEBUG = true;
 	private static final String TAG = "CameraFragment";
 
-	private static final int DEFAULT_WIDTH = 640;
-	private static final int DEFAULT_HEIGHT = 480;
+	private static final int DEFAULT_WIDTH = 480;
+	private static final int DEFAULT_HEIGHT = 640;
 
 	private Handler mHandler;
 
@@ -114,7 +109,7 @@ public class CameraFragment extends BaseFragment {
 						mImageView.setImageBitmap(bitmap);
 						break;
 					case IMAGE_VIEW_R:
-						Log.d(TAG,"setImageBitmap");
+						Log.d(TAG,"setImageBitmapr");
 						Bitmap bitmap1 = (Bitmap) msg.obj;
 						mImageViewR.setImageBitmap(bitmap1);
 
@@ -283,8 +278,8 @@ public class CameraFragment extends BaseFragment {
 			mCameraClient.connect(0x1a90,0x1a20);//实际摄像头pid  0x1a90可见   0x1a20红外
 		}
 	}
-	private static Bitmap bmp_l = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
-	private static Bitmap bmp_r = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
+	private static Bitmap bmp_l = Bitmap.createBitmap(480, 640, Bitmap.Config.ARGB_8888);//ARGB_8888);
+	private static Bitmap bmp_r = Bitmap.createBitmap(480, 640, Bitmap.Config.ARGB_8888);//ARGB_8888);
 	private static int[] rgba = new int[640*480];
 
 	private NV21ToBitmap mNV21ToBitmap;
@@ -312,35 +307,7 @@ public class CameraFragment extends BaseFragment {
 		bitmap.setPixels(rgba, 0 , width, 0, 0, width, height);
 		//return bmp;
 	}
-
-
-	static BitmapFactory.Options options = new BitmapFactory.Options();
-	public static Bitmap byteToBitmap(byte[] imgByte) {
-		InputStream input = null;
-		Bitmap bitmap = null;
-
-
-		input = new ByteArrayInputStream(imgByte);
-		SoftReference softRef = new SoftReference(BitmapFactory.decodeStream(
-				input, null, options));
-		bitmap = (Bitmap) softRef.get();
-		if (imgByte != null) {
-			imgByte = null;
-		}
-
-		try {
-			if (input != null) {
-				input.close();
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return bitmap;
-	}
-
-
-		private final ICameraClientCallback mCameraListener = new ICameraClientCallback() {
+	private final ICameraClientCallback mCameraListener = new ICameraClientCallback() {
 		@Override
 		public void onConnect() {
 			if (DEBUG) Log.v(TAG, "mCameraListener onConnect:");
@@ -368,18 +335,16 @@ public class CameraFragment extends BaseFragment {
 		public void handleData(final byte[] data, int camera) {
 			if (data != null){
 				if (camera ==0){
-
-				//	bmp_l = byteToBitmap(data);
-					rawByteArray2RGBABitmap2(bmp_l,data ,640,480);
+					Log.v(TAG, "send to left:");
+					rawByteArray2RGBABitmap2(bmp_l,data ,480,640);
 					//bmp_l =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
 					mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW, bmp_l));
 				}else {
-				//	bmp_r= byteToBitmap(data);
-
-						rawByteArray2RGBABitmap2(bmp_r,data ,640,480);
-					//bmp_r =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
-					mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW_R, bmp_r));
-				}
+					Log.v(TAG, "send to right:");
+					rawByteArray2RGBABitmap2(bmp_r,data ,480,640);
+	                //bmp_r =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
+	                mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW_R, bmp_r));
+					}
 			}
 
 		}

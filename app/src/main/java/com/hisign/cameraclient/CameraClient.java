@@ -313,13 +313,7 @@ public class CameraClient implements ICameraClient {
 			}
 		}
 
-		private static Bitmap bmp_l = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
-		private static Bitmap bmp_r = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
-
 		private Handler mHandler;
-
-
-
 
 
 		private static final class CameraTask extends CameraCallback.Stub implements Runnable{//,Handler.Callback {
