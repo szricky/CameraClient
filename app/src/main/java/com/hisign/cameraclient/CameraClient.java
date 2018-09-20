@@ -195,6 +195,11 @@ public class CameraClient implements ICameraClient {
 				mService = CameraInterface.Stub.asInterface(service);
 				mServiceSync.notifyAll();
 			}
+			/*try {
+				mService.asBinder().linkToDeath(mDeathRecipient, 0);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}*/
 		}
 
 		@Override
