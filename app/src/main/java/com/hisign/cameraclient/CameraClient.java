@@ -180,7 +180,13 @@ public class CameraClient implements ICameraClient {
 			}
 		}
 	}
-
+	// 失效重联机制, 当Binder死亡时, 重新连接
+	private IBinder.DeathRecipient mDeathRecipient = new IBinder.DeathRecipient() {
+		@Override public void binderDied() {
+			Log.e(TAG, "Binder失效");
+			doBindService();
+		}
+	};
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(final ComponentName name, final IBinder service) {
@@ -302,53 +308,21 @@ public class CameraClient implements ICameraClient {
 			}
 		}
 
-		private static Bitmap bmp_l = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
-		private static Bitmap bmp_r = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
-
 		private Handler mHandler;
 
 
-
-
-
-		private static final class CameraTask extends CameraCallback.Stub implements Runnable,Handler.Callback {
+		private static final class CameraTask extends CameraCallback.Stub implements Runnable{//,Handler.Callback {
 			private static final String TAG_CAMERA = "CameraClientThread";
 			private final Object mSync = new Object();
 			private CameraClient mParent;
 			private CameraHandler mHandler;
 			private boolean mIsConnected;
-		//	private Handler mHander = new Handler(this);
 			private int mServiceId;
 			private int mServiceId_1;
 
 
 			private CameraTask(final CameraClient parent) {
 				mParent = parent;
-			}
-			private static int[] rgba = new int[640*480];
-
-			public void rawByteArray2RGBABitmap2(Bitmap bitmap,byte[] data, int width, int height) {
-				int frameSize = width * height;
-				for (int h = 0; h < height; h++)
-					for (int w = 0; w < width; w++) {
-						int y = (0xff & ((int) data[h * width + w]));
-						int u = (0xff & ((int) data[frameSize + (h >> 1) * width + (w & ~1) + 0]));
-						int v = (0xff & ((int) data[frameSize + (h >> 1) * width + (w & ~1) + 1]));
-						y = y < 16 ? 16 : y;
-
-						int b = Math.round(1.164f * (y-16) + 2.018f * (u - 128));
-						int g = Math.round(1.164f * (y-16) - 0.813f * (v - 128) - 0.391f * (u - 128));
-						int r =  Math.round(1.164f * (y-16) + 1.596f*(v - 128));
-
-						r = r < 0 ? 0 : (r > 255 ? 255 : r);
-						g = g < 0 ? 0 : (g > 255 ? 255 : g);
-						b = b < 0 ? 0 : (b > 255 ? 255 : b);
-
-						rgba[h * width + w] = 0xff000000 + (r << 16) + (g << 8) + b;
-					}
-
-				bitmap.setPixels(rgba, 0 , width, 0, 0, width, height);
-				//return bmp;
 			}
 
 			public CameraHandler getHandler() {
@@ -382,35 +356,9 @@ public class CameraClient implements ICameraClient {
 //================================================================================
 // callbacks from service
 
-
-
-		/*	@Override
-			public void onFrame(final byte[] data, int camera) throws RemoteException {
-				Log.d(TAG,"onFrame ,Data length is : " + data.length );
-
-				mParent.mListener.handleData(data,camera);
-
-
-				*//*if (camera == 0){
-					Message obtainMessage = mHander.obtainMessage();
-					obtainMessage.obj= data;
-					obtainMessage.arg1=camera;
-					obtainMessage.what= MSG_IMAGE_VIEW;
-					mHander.sendMessage(obtainMessage);
-				}else {
-					Message obtainMessage = mHander.obtainMessage();
-					obtainMessage.obj= data;
-					obtainMessage.arg1=camera;
-					obtainMessage.what= MSG_IMAGE_VIEW_R;
-					mHander.sendMessage(obtainMessage);
-				}*//*
-
-			}*/
 			private static byte[] mBytes;
 			@Override
 			public void onFrame(TestPra testPra, int camera) throws RemoteException {
-				/*Log.d(TAG,"Bytes length = " + testPra.getBytes().length);
-				Log.d(TAG,"onFrame ,Data length is : " + testPra.getBytes().length );*/
 				mBytes = testPra.getBytes();
 				mParent.mListener.handleData(mBytes,camera);
 			}
@@ -439,14 +387,6 @@ public class CameraClient implements ICameraClient {
 				if (DEBUG) Log.v(TAG_CAMERA, "handleSelect:");
 				final CameraInterface service = mParent.getService();
 				if (service != null) {
-
-				/*	if (service != null) {
-						try {
-							mServiceId = service.select(device, this);
-						} catch (final RemoteException e) {
-							if (DEBUG) Log.e(TAG_CAMERA, "select:", e);
-						}
-					}*/
 					mServiceId = device.hashCode();
 					Log.d(TAG,"mServiceId = " + mServiceId);
 
@@ -462,14 +402,6 @@ public class CameraClient implements ICameraClient {
 				if (DEBUG) Log.v(TAG_CAMERA, "handleSelect:");
 				final CameraInterface service = mParent.getService();
 				if (service != null) {
-
-				/*	if (service != null) {
-						try {
-							mServiceId = service.select(device, this);
-						} catch (final RemoteException e) {
-							if (DEBUG) Log.e(TAG_CAMERA, "select:", e);
-						}
-					}*/
 					mServiceId_1 = device.hashCode();
 					Log.d(TAG,"mServiceId_1 = " + mServiceId_1);
 				}
@@ -571,7 +503,7 @@ public class CameraClient implements ICameraClient {
 
 			}
 
-			public void handleImage(Bitmap bitmap) {
+		/*	public void handleImage(Bitmap bitmap) {
 				if (mParent != null) {
 					if (mParent.mListener != null) {
 						mParent.mListener.handleData(bitmap);
@@ -585,11 +517,11 @@ public class CameraClient implements ICameraClient {
 						mParent.mListener.handleDataR(bitmap);
 					}
 				}
-			}
+			}*/
 
 
 
-				@Override
+	/*			@Override
 			public boolean handleMessage(Message msg) {
 				switch (msg.what) {
 					case MSG_IMAGE_VIEW:
@@ -615,7 +547,7 @@ public class CameraClient implements ICameraClient {
 				}
 
 				return false;
-			}
+			}*/
 		}
 	}
 

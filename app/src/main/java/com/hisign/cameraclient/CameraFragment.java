@@ -56,8 +56,8 @@ public class CameraFragment extends BaseFragment {
 	private static final boolean DEBUG = true;
 	private static final String TAG = "CameraFragment";
 
-	private static final int DEFAULT_WIDTH = 640;
-	private static final int DEFAULT_HEIGHT = 480;
+	private static final int DEFAULT_WIDTH = 480;
+	private static final int DEFAULT_HEIGHT = 640;
 
 	private Handler mHandler;
 
@@ -109,7 +109,7 @@ public class CameraFragment extends BaseFragment {
 						mImageView.setImageBitmap(bitmap);
 						break;
 					case IMAGE_VIEW_R:
-						Log.d(TAG,"setImageBitmap");
+						Log.d(TAG,"setImageBitmapr");
 						Bitmap bitmap1 = (Bitmap) msg.obj;
 
 						mImageViewR.setImageBitmap(bitmap1);
@@ -294,8 +294,8 @@ public class CameraFragment extends BaseFragment {
 			mCameraClient.connect(0x1a90,0x1a20);//实际摄像头pid  0x1a90可见   0x1a20红外
 		}
 	}
-	private static Bitmap bmp_l = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
-	private static Bitmap bmp_r = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
+	private static Bitmap bmp_l = Bitmap.createBitmap(480, 640, Bitmap.Config.ARGB_8888);//ARGB_8888);
+	private static Bitmap bmp_r = Bitmap.createBitmap(480, 640, Bitmap.Config.ARGB_8888);//ARGB_8888);
 	private static int[] rgba = new int[640*480];
 
 	private NV21ToBitmap mNV21ToBitmap;
@@ -349,13 +349,18 @@ public class CameraFragment extends BaseFragment {
 
 		@Override
 		public void handleData(final byte[] data, int camera) {
-			if (camera ==0){
-				rawByteArray2RGBABitmap2(bmp_l,data ,640,480);
-
-				mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW, bmp_l));
-			}else {
-				rawByteArray2RGBABitmap2(bmp_r,data ,640,480);
-				mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW_R, bmp_r));
+			if (data != null){
+				if (camera ==0){
+					Log.v(TAG, "send to left:");
+					rawByteArray2RGBABitmap2(bmp_l,data ,480,640);
+					//bmp_l =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
+					mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW, bmp_l));
+				}else {
+					Log.v(TAG, "send to right:");
+					rawByteArray2RGBABitmap2(bmp_r,data ,480,640);
+	                //bmp_r =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
+	                mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW_R, bmp_r));
+					}
 			}
 		}
 
