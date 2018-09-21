@@ -21,6 +21,12 @@ android {
             outputFileName = "CameraClient20180918_1.apk";
         }
     }
+    sourceSets {
+        main {
+            jniLibs.srcDir 'src/main/libs'
+            jni.srcDirs = []
+        }
+    }
 }
 
 dependencies {

@@ -31,6 +31,11 @@ import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicYuvToRGB;
+import android.renderscript.Type;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,6 +46,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.ToggleButton;
 
+import com.example.libyuv.Test;
 import com.serenegiant.common.BaseFragment;
 import com.serenegiant.usb.CameraDialog;
 import com.serenegiant.usb.DeviceFilter;
@@ -54,6 +60,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 public class CameraFragment extends BaseFragment {
@@ -136,7 +143,8 @@ public class CameraFragment extends BaseFragment {
 		mHandler =new MyHandler(this);
 		mNV21ToBitmap = new NV21ToBitmap(getActivity());
 
-
+		rs = RenderScript.create(getActivity());
+		yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs));
 	}
 
 	@Override
@@ -312,6 +320,14 @@ public class CameraFragment extends BaseFragment {
 		bitmap.setPixels(rgba, 0 , width, 0, 0, width, height);
 		//return bmp;
 	}
+	private RenderScript rs;
+	private ScriptIntrinsicYuvToRGB yuvToRgbIntrinsic;
+	private Type.Builder yuvType, rgbaType;
+	private Allocation in, out;
+
+
+
+
 
 
 	static BitmapFactory.Options options = new BitmapFactory.Options();
@@ -364,20 +380,27 @@ public class CameraFragment extends BaseFragment {
 			enableButtons(false);
 		}
 
-		@Override
+
+
+			private int w=640,h=480;
+			//用于保存将yuv数据转成argb数据
+			byte[] rgbbuffer=new byte[w*h*4];
+			byte[] rgbbuffer1=new byte[w*h*4];
+
+			@Override
 		public void handleData(final byte[] data, int camera) {
+			Log.d(TAG,"data  length = " + data.length);
+
 			if (data != null){
 				if (camera ==0){
-
-				//	bmp_l = byteToBitmap(data);
-					rawByteArray2RGBABitmap2(bmp_l,data ,640,480);
-					//bmp_l =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
+					Test.convertToArgb(data,w*h*3/2,rgbbuffer,w*4,0,0,w,h,w,h,0,0);
+					bmp_l.copyPixelsFromBuffer(ByteBuffer.wrap(rgbbuffer));
+				//	rawByteArray2RGBABitmap2(bmp_l,data ,640,480);
 					mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW, bmp_l));
 				}else {
-				//	bmp_r= byteToBitmap(data);
-
-						rawByteArray2RGBABitmap2(bmp_r,data ,640,480);
-					//bmp_r =  mNV21ToBitmap.nv21ToBitmap(data ,640,480);
+					Test.convertToArgb(data,w*h*3/2,rgbbuffer1,w*4,0,0,w,h,w,h,0,0);
+					bmp_r.copyPixelsFromBuffer(ByteBuffer.wrap(rgbbuffer1));
+			//		rawByteArray2RGBABitmap2(bmp_r,data ,640,480);
 					mHandler.sendMessage(mHandler.obtainMessage(IMAGE_VIEW_R, bmp_r));
 				}
 			}
