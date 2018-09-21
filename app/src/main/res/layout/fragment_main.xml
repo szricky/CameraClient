@@ -62,29 +62,37 @@
 
    <ImageView
         android:id="@+id/frame_image_test"
-        android:layout_width="360dp"
-        android:layout_height="240dp"
+        android:layout_width="240dp"
+        android:layout_height="360dp"
         android:layout_below="@id/preview_button"
-        android:src="@drawable/border" />
+       android:layout_margin="20dp"
+
+       android:src="@drawable/border" />
     <ImageView
         android:id="@+id/frame_image_test_r"
-        android:layout_width="360dp"
-        android:layout_height="240dp"
+        android:layout_width="240dp"
+        android:layout_height="360dp"
         android:layout_toEndOf="@id/frame_image_test"
         android:layout_below="@id/preview_button"
+        android:layout_margin="20dp"
+
         android:src="@drawable/border" />
 
     <com.serenegiant.widget.UVCCameraTextureView
         android:id="@+id/camera_view"
-        android:layout_width="360dp"
-        android:layout_height="240dp"
-        android:layout_below="@id/frame_image_test"
+        android:layout_width="240dp"
+        android:layout_height="360dp"
+        android:layout_below="@id/preview_button"
+        android:layout_toRightOf="@id/frame_image_test_r"
+        android:layout_margin="20dp"
         android:src="@drawable/border"/>
     <com.serenegiant.widget.UVCCameraTextureView
         android:id="@+id/camera_view1"
-        android:layout_width="360dp"
-        android:layout_height="240dp"
-        android:layout_below="@id/frame_image_test"
+        android:layout_width="240dp"
+        android:layout_height="360dp"
+        android:layout_below="@id/preview_button"
+        android:layout_margin="20dp"
+
         android:layout_toRightOf="@id/camera_view"
         android:src="@drawable/border"/>
 <!--    <com.serenegiant.widget.UVCCameraTextureView
