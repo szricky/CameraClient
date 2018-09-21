@@ -68,8 +68,8 @@ public class CameraFragment extends BaseFragment {
 	private static final boolean DEBUG = true;
 	private static final String TAG = "CameraFragment";
 
-	private static final int DEFAULT_WIDTH = 640;
-	private static final int DEFAULT_HEIGHT = 480;
+	private static final int DEFAULT_WIDTH = 480;//640;
+	private static final int DEFAULT_HEIGHT = 640;//480;
 
 	private Handler mHandler;
 
@@ -291,8 +291,10 @@ public class CameraFragment extends BaseFragment {
 			mCameraClient.connect(0x1a90,0x1a20);//实际摄像头pid  0x1a90可见   0x1a20红外
 		}
 	}
-	private static Bitmap bmp_l = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
-	private static Bitmap bmp_r = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
+	/*private static Bitmap bmp_l = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);
+	private static Bitmap bmp_r = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888);//ARGB_8888);*/
+	private static Bitmap bmp_l = Bitmap.createBitmap(480, 640, Bitmap.Config.ARGB_8888);//ARGB_8888);
+	private static Bitmap bmp_r = Bitmap.createBitmap(480, 640, Bitmap.Config.ARGB_8888);//ARGB_8888);
 	private static int[] rgba = new int[640*480];
 
 	private NV21ToBitmap mNV21ToBitmap;
@@ -382,7 +384,9 @@ public class CameraFragment extends BaseFragment {
 
 
 
-			private int w=640,h=480;
+		//	private int w=640,h=480;
+		private int w=480,h=640;
+
 			//用于保存将yuv数据转成argb数据
 			byte[] rgbbuffer=new byte[w*h*4];
 			byte[] rgbbuffer1=new byte[w*h*4];
