@@ -16,7 +16,7 @@ public class ImageUtils {
 
     // save image to sdcard path: Pictures/MyTestImage/
     public static void saveImageData(byte[] imageData) {
-        File imageFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
+        File imageFile = getOutputMediaFile(MEDIA_TYPE_VIDEO);//(MEDIA_TYPE_IMAGE);
         if (imageFile == null) return;
         try {
             FileOutputStream fos = new FileOutputStream(imageFile);
@@ -46,7 +46,7 @@ public class ImageUtils {
             Log.d("","imageFile is : " + imageFile);
         } else if (type == MEDIA_TYPE_VIDEO) {
             imageFile = new File(imageFileDir.getPath() + File.separator +
-                    "VID_" + timeStamp + ".mp4");
+                    "VID_"  + ".mp4");
         } else return null;
         return imageFile;
     }
